@@ -1,0 +1,13 @@
+---
+# Database PRIMARY configuration
+
+db_type: primary
+
+# PostgreSQL settings
+postgresql_database: medusa
+postgresql_user: medusa
+postgresql_password: "{{ lookup('env', 'POSTGRES_PASSWORD') | default('medusa_change_me', true) }}"
+
+# Replication settings
+postgresql_replication_user: replicator
+postgresql_replication_password: "{{ lookup('env', 'POSTGRES_REPLICATION_PASSWORD') | default('replicator_change_me', true) }}"

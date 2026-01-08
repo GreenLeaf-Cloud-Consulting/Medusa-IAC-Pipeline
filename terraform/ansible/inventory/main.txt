@@ -1,0 +1,2 @@
+This text file is just there so that a folder is present on github.
+It is not used by the terraform code.

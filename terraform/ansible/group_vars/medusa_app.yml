@@ -1,0 +1,44 @@
+---
+# Medusa Application configuration
+
+# Application settings
+medusa_app_dir: "/home/{{ ansible_user }}/medusa"
+medusa_backend_port: 9000
+medusa_storefront_port: 8000
+deploy_storefront: false  # Pas de storefront pour l'instant
+
+# Git repository
+medusa_git_repo: "https://github.com/GreenLeaf-Cloud-Consulting/Aws-Medusa-Infra.git"
+medusa_git_branch: "main"
+
+# GitHub token (loaded from environment)
+github_access_token: "{{ lookup('env', 'GITHUB_ACCESS_TOKEN') | default('') }}"
+
+# Database connection (externe - pas Docker)
+# L'IP de la DB sera définie dynamiquement par région
+database_type: postgres
+
+# France: utilise le PRIMARY local
+# Germany: utilise le REPLICA local
+database_host: "{{ hostvars[groups['database_primary'][0]]['private_ip'] if region == 'france' else hostvars[groups['database_replicas'] | select('search', region) | list | first]['private_ip'] }}"
+
+database_url: "postgres://{{ postgresql_user }}:{{ postgresql_password }}@{{ database_host }}:5432/{{ postgresql_database }}"
+
+# Redis local (dans Docker)
+redis_url: "redis://localhost:6379"
+
+# Security
+jwt_secret: "{{ lookup('env', 'MEDUSA_JWT_SECRET') | default('change_me_jwt_secret', true) }}"
+cookie_secret: "{{ lookup('env', 'MEDUSA_COOKIE_SECRET') | default('change_me_cookie_secret', true) }}"
+
+# CORS
+store_cors: "http://localhost:8000"
+admin_cors: "http://localhost:7001,http://localhost:9000"
+
+# Node environment
+node_env: production
+
+# PostgreSQL credentials (pour la connexion)
+postgresql_database: medusa
+postgresql_user: medusa
+postgresql_password: "{{ lookup('env', 'POSTGRES_PASSWORD') | default('medusa_change_me', true) }}"

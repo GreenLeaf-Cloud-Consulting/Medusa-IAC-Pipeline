@@ -1,0 +1,13 @@
+---
+- name: Include Git tasks
+  include_tasks: git.yml
+
+- name: Include environment configuration tasks
+  include_tasks: environment.yml
+
+- name: Include backend deployment tasks
+  include_tasks: backend.yml
+
+- name: Include storefront deployment tasks
+  include_tasks: storefront.yml
+  when: deploy_storefront | default(true)

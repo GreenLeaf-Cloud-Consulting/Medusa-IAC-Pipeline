@@ -1,0 +1,18 @@
+[Unit]
+Description=Medusa Storefront
+After=network.target
+
+[Service]
+Type=simple
+User={{ ansible_user }}
+WorkingDirectory={{ medusa_storefront_dir }}
+Environment="NVM_DIR={{ nvm_install_dir }}"
+Environment="PATH={{ nvm_install_dir }}/versions/node/{{ nodejs_version }}/bin:{{ ansible_env.PATH }}"
+ExecStart=/bin/bash -c 'source {{ nvm_install_dir }}/nvm.sh && npm run start'
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

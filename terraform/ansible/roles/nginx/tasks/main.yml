@@ -1,0 +1,39 @@
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Ensure Nginx service is started and enabled
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Remove default Nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload Nginx
+
+- name: Create Nginx configuration for Medusa
+  template:
+    src: medusa.conf.j2
+    dest: /etc/nginx/sites-available/medusa
+    mode: '0644'
+  notify: Reload Nginx
+  when: nginx_configure_medusa | default(true)
+
+- name: Enable Medusa site
+  file:
+    src: /etc/nginx/sites-available/medusa
+    dest: /etc/nginx/sites-enabled/medusa
+    state: link
+  notify: Reload Nginx
+  when: nginx_configure_medusa | default(true)
+
+- name: Ensure Nginx is running
+  service:
+    name: nginx
+    state: started

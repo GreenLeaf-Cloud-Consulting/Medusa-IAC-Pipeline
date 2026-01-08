@@ -1,0 +1,128 @@
+---
+# ==========================================
+# Site Playbook - V2 Architecture
+# Multi-région avec ALB et DB dédiées
+# ==========================================
+
+# ==========================================
+# PHASE 1: Configuration système de base
+# ==========================================
+- name: Setup base system on all instances
+  hosts: all
+  become: yes
+  roles:
+    - role: system
+      tags: ['system', 'setup', 'base']
+
+# ==========================================
+# PHASE 2: Installation PostgreSQL
+# ==========================================
+
+# PRIMARY Database (France)
+- name: Setup PRIMARY PostgreSQL Database
+  hosts: database_primary
+  become: yes
+  roles:
+    - role: postgresql
+      tags: ['postgresql', 'database', 'primary']
+
+# Wait for PRIMARY to be ready
+- name: Wait for PRIMARY database to be fully operational
+  hosts: database_primary
+  tasks:
+    - name: Wait 30 seconds for PRIMARY to stabilize
+      pause:
+        seconds: 30
+      tags: ['postgresql', 'database']
+
+# REPLICA Databases
+- name: Setup REPLICA PostgreSQL Databases
+  hosts: database_replicas
+  become: yes
+  serial: 1  # Deploy replicas one at a time
+  roles:
+    - role: postgresql
+      tags: ['postgresql', 'database', 'replica']
+
+# ==========================================
+# PHASE 3: Configuration App Instances
+# ==========================================
+
+- name: Setup App instances (Docker + Node.js)
+  hosts: medusa_app
+  become: yes
+  roles:
+    - role: docker
+      tags: ['docker', 'setup', 'app']
+
+    - role: nodejs
+      tags: ['nodejs', 'setup', 'app']
+
+# ==========================================
+# PHASE 4: Déploiement Medusa
+# ==========================================
+
+- name: Deploy Medusa Application
+  hosts: medusa_app
+  become: yes
+  roles:
+    - role: medusa
+      tags: ['medusa', 'application', 'deploy']
+
+# ==========================================
+# PHASE 5: Vérifications finales
+# ==========================================
+
+- name: Final verification
+  hosts: all
+  tasks:
+    - name: Display deployment summary
+      debug:
+        msg:
+          - "========================================="
+          - "🚀 DÉPLOIEMENT TERMINÉ!"
+          - "========================================="
+          - ""
+          - "📍 Instance: {{ inventory_hostname }}"
+          - "   Role: {{ role }}"
+          - "   Region: {{ region }}"
+          - "   Environment: {{ environment }}"
+          - ""
+      tags: ['always']
+
+    - name: Display database information
+      debug:
+        msg:
+          - "💾 Database Info:"
+          - "   Type: {{ db_type }}"
+          - "   IP: {{ private_ip }}"
+      when: "'database' in role"
+      tags: ['always']
+
+    - name: Display app information
+      debug:
+        msg:
+          - "⚙️  App Info:"
+          - "   Backend: http://{{ private_ip }}:9000"
+          - "   Accessible via ALB"
+      when: "'app' in role"
+      tags: ['always']
+
+- name: Display global information
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Final message
+      debug:
+        msg:
+          - "========================================="
+          - "✅ TOUTES LES INSTANCES SONT PRÊTES!"
+          - "========================================="
+          - ""
+          - "📋 Pour vérifier:"
+          - "   - France ALB: Voir output Terraform"
+          - "   - Germany ALB: Voir output Terraform"
+          - "   - Réplication DB: ansible database_primary -a 'sudo -u postgres psql -c \"SELECT * FROM pg_stat_replication;\"'"
+          - ""
+      tags: ['always']

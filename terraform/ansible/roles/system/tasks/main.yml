@@ -1,0 +1,25 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install essential system packages
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - build-essential
+      - software-properties-common
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: yes
+
+- name: Configure timezone
+  community.general.timezone:
+    name: "{{ system_timezone | default('UTC') }}"
+  when: system_timezone is defined

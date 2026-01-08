@@ -1,0 +1,78 @@
+---
+# PostgreSQL Backup Configuration (PRIMARY only)
+
+- name: Install cron package
+  apt:
+    name: cron
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Ensure cron service is running
+  systemd:
+    name: cron
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Create backup directory
+  file:
+    path: /var/backups/postgresql
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0750'
+  become: yes
+
+- name: Create backup script
+  copy:
+    dest: /usr/local/bin/postgres-backup.sh
+    mode: '0755'
+    owner: root
+    group: root
+    content: |
+      #!/bin/bash
+      # PostgreSQL Backup Script
+
+      BACKUP_DIR="/var/backups/postgresql"
+      DATE=$(date +%Y%m%d_%H%M%S)
+      DATABASE="{{ postgresql_database }}"
+      RETENTION_DAYS=7
+
+      # Create backup
+      sudo -u postgres pg_dump ${DATABASE} | gzip > ${BACKUP_DIR}/${DATABASE}_${DATE}.sql.gz
+
+      # Remove old backups
+      find ${BACKUP_DIR} -name "*.sql.gz" -mtime +${RETENTION_DAYS} -delete
+
+      # Log
+      echo "$(date): Backup completed - ${DATABASE}_${DATE}.sql.gz" >> /var/log/postgresql-backup.log
+  become: yes
+
+- name: Create daily backup cron job
+  cron:
+    name: "PostgreSQL daily backup"
+    minute: "0"
+    hour: "2"
+    job: "/usr/local/bin/postgres-backup.sh"
+    user: root
+  become: yes
+
+- name: Create backup log file
+  file:
+    path: /var/log/postgresql-backup.log
+    state: touch
+    owner: postgres
+    group: postgres
+    mode: '0644'
+  become: yes
+
+- name: Perform initial backup
+  command: /usr/local/bin/postgres-backup.sh
+  become: yes
+  register: initial_backup
+  changed_when: true
+
+- name: Display backup status
+  debug:
+    msg: "Initial backup completed. Check /var/backups/postgresql/"

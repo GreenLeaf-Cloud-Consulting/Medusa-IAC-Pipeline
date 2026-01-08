@@ -1,0 +1,58 @@
+---
+- name: Copy docker-compose file for Redis + Medusa
+  template:
+    src: docker-compose-redis.yml.j2
+    dest: "{{ medusa_app_dir }}/docker-compose.yml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Start Redis and Medusa backend with Docker Compose
+  shell: |
+    cd {{ medusa_app_dir }}
+    sg docker -c "docker-compose up -d"
+  become: true
+  become_user: "{{ ansible_user }}"
+  when: use_docker_deployment | default(true)
+
+- name: Wait for backend container to be healthy
+  shell: |
+    i=1
+    while [ $i -le 30 ]; do
+      STATUS=$(docker inspect --format='{% raw %}{{.State.Health.Status}}{% endraw %}' medusa-backend 2>/dev/null || echo "starting")
+      if [ "$STATUS" = "healthy" ]; then
+        echo "Backend is healthy"
+        exit 0
+      fi
+      echo "Waiting for backend... ($i/30) Status: $STATUS"
+      sleep 10
+      i=$((i + 1))
+    done
+    echo "Backend did not become healthy in time"
+    exit 1
+  when: use_docker_deployment | default(true)
+
+- name: Run Medusa migrations
+  shell: |
+    cd {{ medusa_app_dir }}
+    sg docker -c "docker-compose exec -T backend npx medusa migrations run"
+  become: true
+  become_user: "{{ ansible_user }}"
+  when:
+    - use_docker_deployment | default(true)
+    - run_migrations | default(true)
+  ignore_errors: true
+
+- name: Create admin user
+  shell: |
+    cd {{ medusa_app_dir }}
+    sg docker -c "docker-compose exec -T backend npx medusa user -e {{ medusa_admin_email }} -p {{ medusa_admin_password }}"
+  become: true
+  become_user: "{{ ansible_user }}"
+  when:
+    - use_docker_deployment | default(true)
+    - create_admin_user | default(false)
+    - medusa_admin_email is defined
+    - medusa_admin_password is defined
+  ignore_errors: true
+  no_log: true

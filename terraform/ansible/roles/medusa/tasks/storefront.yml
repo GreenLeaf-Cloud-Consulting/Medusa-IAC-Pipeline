@@ -1,0 +1,49 @@
+---
+- name: Check if storefront directory exists
+  stat:
+    path: "{{ medusa_storefront_dir }}"
+  register: storefront_dir
+
+- name: Install storefront dependencies
+  shell: |
+    export NVM_DIR="{{ nvm_install_dir }}"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+    npm install
+  args:
+    chdir: "{{ medusa_storefront_dir }}"
+    executable: /bin/bash
+  become_user: "{{ ansible_user }}"
+  when: storefront_dir.stat.exists
+
+- name: Build storefront
+  shell: |
+    export NVM_DIR="{{ nvm_install_dir }}"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+    npm run build
+  args:
+    chdir: "{{ medusa_storefront_dir }}"
+    executable: /bin/bash
+  become_user: "{{ ansible_user }}"
+  when:
+    - storefront_dir.stat.exists
+    - build_storefront | default(true)
+
+- name: Create systemd service for storefront
+  template:
+    src: medusa-storefront.service.j2
+    dest: /etc/systemd/system/medusa-storefront.service
+    mode: '0644'
+  notify: Restart Medusa storefront
+  when:
+    - storefront_dir.stat.exists
+    - use_systemd_service | default(true)
+
+- name: Enable and start storefront service
+  systemd:
+    name: medusa-storefront
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when:
+    - storefront_dir.stat.exists
+    - use_systemd_service | default(true)

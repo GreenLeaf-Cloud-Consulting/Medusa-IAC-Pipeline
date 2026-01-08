@@ -1,0 +1,19 @@
+---
+- name: Create environment file from template
+  template:
+    src: medusa.env.j2
+    dest: "{{ medusa_app_dir }}/.env"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+  when: use_env_template | default(true)
+
+- name: Ensure required environment variables are set
+  lineinfile:
+    path: "{{ medusa_app_dir }}/.env"
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    create: yes
+  loop: "{{ medusa_env_vars | dict2items }}"
+  when: medusa_env_vars is defined
+  no_log: true

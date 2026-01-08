@@ -1,0 +1,28 @@
+---
+- name: Ensure .ssh directory exists
+  file:
+    path: "{{ ansible_env.HOME }}/.ssh"
+    state: directory
+    mode: '0700'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Add GitHub to known hosts
+  known_hosts:
+    name: github.com
+    key: "{{ lookup('pipe', 'ssh-keyscan -t rsa github.com') }}"
+    path: "{{ ansible_env.HOME }}/.ssh/known_hosts"
+    state: present
+
+# Clone avec HTTPS + Token pour les repos privés
+- name: Clone Medusa repository (HTTPS with token)
+  git:
+    repo: "https://{{ github_access_token }}@github.com/GreenLeaf-Cloud-Consulting/Aws-Medusa-Infra.git"
+    dest: "{{ medusa_app_dir }}"
+    version: "{{ medusa_git_branch }}"
+    force: yes
+  become_user: "{{ ansible_user }}"
+  when:
+    - github_access_token is defined
+    - github_access_token | length > 0
+  no_log: true  # Ne pas afficher le token dans les logs !

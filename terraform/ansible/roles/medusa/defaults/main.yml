@@ -1,0 +1,47 @@
+---
+# Git configuration
+git_generate_ssh_key: true
+medusa_git_repo: ""
+medusa_git_branch: "main"
+
+# Application directories
+medusa_app_dir: "/home/{{ ansible_user }}/medusa"
+medusa_storefront_dir: "{{ medusa_app_dir }}/storefront"
+
+# Deployment configuration
+use_docker_deployment: true
+use_env_template: true
+deploy_storefront: true
+build_storefront: true
+use_systemd_service: true
+
+# Backend configuration
+medusa_backend_port: 9000
+medusa_storefront_port: 8000
+run_migrations: true
+create_admin_user: false
+
+# Node configuration
+nvm_install_dir: "/home/{{ ansible_user }}/.nvm"
+node_env: "production"
+
+# Database configuration
+database_type: "postgres"
+database_url: "postgres://medusa:medusa@localhost:5432/medusa"
+
+# Redis configuration
+redis_url: "redis://localhost:6379"
+
+# Security (should be overridden)
+jwt_secret: "supersecret"
+cookie_secret: "supersecret"
+
+# CORS configuration
+store_cors: "http://localhost:8000"
+admin_cors: "http://localhost:7001"
+
+# Region configuration
+is_primary_region: false
+
+# Additional environment variables
+additional_env_vars: {}

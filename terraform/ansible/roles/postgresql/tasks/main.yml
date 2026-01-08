@@ -1,0 +1,22 @@
+---
+# PostgreSQL Role - Main Tasks
+# Installe et configure PostgreSQL avec réplication streaming
+
+- name: Include installation tasks
+  include_tasks: install.yml
+  tags: ['postgresql', 'install']
+
+- name: Include PRIMARY configuration tasks
+  include_tasks: primary.yml
+  when: db_type == 'primary'
+  tags: ['postgresql', 'primary']
+
+- name: Include REPLICA configuration tasks
+  include_tasks: replica.yml
+  when: db_type == 'replica'
+  tags: ['postgresql', 'replica']
+
+- name: Include backup configuration tasks
+  include_tasks: backup.yml
+  when: db_type == 'primary'
+  tags: ['postgresql', 'backup']

@@ -1,0 +1,16 @@
+---
+# Database REPLICAS configuration
+
+db_type: replica
+
+# PostgreSQL settings
+postgresql_database: medusa
+postgresql_user: medusa
+postgresql_password: "{{ lookup('env', 'POSTGRES_PASSWORD') | default('medusa_change_me', true) }}"
+
+# Replication settings
+postgresql_replication_user: replicator
+postgresql_replication_password: "{{ lookup('env', 'POSTGRES_REPLICATION_PASSWORD') | default('replicator_change_me', true) }}"
+
+# Replication slot name (set dynamically per host)
+replication_slot_name: "replica_{{ region }}_{{ environment }}"

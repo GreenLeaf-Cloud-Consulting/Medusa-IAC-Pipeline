@@ -1,0 +1,27 @@
+---
+# PostgreSQL Role - Default Variables
+
+# Database configuration
+postgresql_version: "15"
+postgresql_database: "medusa"
+postgresql_user: "medusa"
+postgresql_password: "medusa_secure_password_change_me"
+
+# Replication configuration
+postgresql_replication_user: "replicator"
+postgresql_replication_password: "replication_secure_password_change_me"
+
+# Replication slot name (dynamically set based on region and environment)
+replication_slot_name: "{{ 'replica_' + region | default('unknown') + '_' + environment | default('dev') }}"
+
+# Primary database IP (must be set in inventory for replicas)
+primary_db_ip: ""
+
+# Database type (set in inventory: 'primary' or 'replica')
+db_type: "primary"
+
+# Backup configuration
+postgresql_backup_enabled: true
+postgresql_backup_retention_days: 7
+postgresql_backup_hour: 2
+postgresql_backup_minute: 0

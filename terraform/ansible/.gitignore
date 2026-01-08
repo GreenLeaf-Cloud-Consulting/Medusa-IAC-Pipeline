@@ -1,0 +1,33 @@
+# Environment files
+.env
+*.env
+!.env.example
+
+# Ansible
+*.retry
+.ansible/
+/tmp/ansible_facts/
+
+# SSH Keys
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+
+# Vault
+vault-password.txt
+*.vault
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

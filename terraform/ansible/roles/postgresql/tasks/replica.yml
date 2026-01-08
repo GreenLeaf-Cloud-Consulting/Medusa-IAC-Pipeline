@@ -1,0 +1,124 @@
+---
+# PostgreSQL REPLICA Configuration
+
+- name: Check if replica is already initialized
+  stat:
+    path: /var/lib/postgresql/15/main/standby.signal
+  register: replica_initialized
+  become: yes
+
+- name: Stop PostgreSQL on replica
+  systemd:
+    name: postgresql
+    state: stopped
+  become: yes
+  when: not replica_initialized.stat.exists
+
+- name: Remove existing data directory on replica
+  file:
+    path: /var/lib/postgresql/15/main
+    state: absent
+  become: yes
+  when: not replica_initialized.stat.exists
+
+- name: Create empty data directory
+  file:
+    path: /var/lib/postgresql/15/main
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+  become: yes
+  when: not replica_initialized.stat.exists
+
+- name: Create .pgpass file for replication user
+  copy:
+    content: "{{ primary_db_ip }}:5432:replication:{{ postgresql_replication_user }}:{{ postgresql_replication_password }}"
+    dest: /var/lib/postgresql/.pgpass
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  become: yes
+  when: not replica_initialized.stat.exists
+
+- name: Run pg_basebackup to clone PRIMARY
+  command: >
+    pg_basebackup
+    -h {{ primary_db_ip }}
+    -D /var/lib/postgresql/15/main
+    -U {{ postgresql_replication_user }}
+    -v
+    -P
+    -W
+    -R
+    -X stream
+    -C -S {{ replication_slot_name }}
+  become: yes
+  become_user: postgres
+  when: not replica_initialized.stat.exists
+  environment:
+    PGPASSWORD: "{{ postgresql_replication_password }}"
+  register: pg_basebackup_result
+  failed_when: false
+
+- name: Display pg_basebackup result
+  debug:
+    msg: "{{ pg_basebackup_result }}"
+  when: not replica_initialized.stat.exists
+
+- name: Configure postgresql.conf for REPLICA
+  lineinfile:
+    path: /etc/postgresql/15/main/postgresql.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backup: yes
+  loop:
+    - { regexp: '^#?hot_standby', line: "hot_standby = on" }
+    - { regexp: '^#?primary_conninfo', line: "primary_conninfo = 'host={{ primary_db_ip }} port=5432 user={{ postgresql_replication_user }} password={{ postgresql_replication_password }} application_name={{ ansible_hostname }}'" }
+    - { regexp: '^#?primary_slot_name', line: "primary_slot_name = '{{ replication_slot_name }}'" }
+  become: yes
+
+- name: Create standby.signal file
+  file:
+    path: /var/lib/postgresql/15/main/standby.signal
+    state: touch
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  become: yes
+  when: not replica_initialized.stat.exists
+
+- name: Start PostgreSQL on replica
+  systemd:
+    name: postgresql
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Wait for PostgreSQL to be ready
+  wait_for:
+    port: 5432
+    delay: 5
+    timeout: 60
+
+- name: Check replication status
+  postgresql_query:
+    db: postgres
+    query: "SELECT status, pg_is_in_recovery() as in_recovery FROM pg_stat_wal_receiver"
+  become: yes
+  become_user: postgres
+  register: replica_status
+  retries: 5
+  delay: 3
+
+- name: Display REPLICA status
+  debug:
+    msg: "Replica status: {{ replica_status }}"
+
+- name: Verify replica is in recovery mode
+  assert:
+    that:
+      - replica_status.query_result[0].in_recovery == true
+    fail_msg: "ERREUR: La replica n'est PAS en mode recovery!"
+    success_msg: "✓ Replica correctement configurée en mode standby"
+  when: replica_status.query_result is defined and replica_status.query_result | length > 0

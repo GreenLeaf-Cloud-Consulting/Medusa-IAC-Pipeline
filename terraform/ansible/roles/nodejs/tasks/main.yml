@@ -1,0 +1,61 @@
+---
+- name: Check if NVM is already installed
+  stat:
+    path: "{{ nvm_install_dir }}/nvm.sh"
+  register: nvm_installed
+
+- name: Install NVM
+  shell: >
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/{{ nvm_version }}/install.sh | bash
+  args:
+    creates: "{{ nvm_install_dir }}/nvm.sh"
+  become_user: "{{ ansible_user }}"
+  when: not nvm_installed.stat.exists
+
+- name: Add NVM to .bashrc
+  blockinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    block: |
+      export NVM_DIR="{{ nvm_install_dir }}"
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+      [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - NVM"
+    create: yes
+  become_user: "{{ ansible_user }}"
+
+- name: Add NVM to .profile
+  blockinfile:
+    path: "/home/{{ ansible_user }}/.profile"
+    block: |
+      export NVM_DIR="{{ nvm_install_dir }}"
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+      [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - NVM"
+    create: yes
+  become_user: "{{ ansible_user }}"
+
+- name: Install Node.js LTS via NVM
+  shell: |
+    export NVM_DIR="{{ nvm_install_dir }}"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+    nvm install {{ nodejs_version }}
+    nvm alias default lts/*
+  args:
+    executable: /bin/bash
+    creates: "{{ nvm_install_dir }}/versions/node"
+  become_user: "{{ ansible_user }}"
+
+- name: Verify Node.js installation
+  shell: |
+    export NVM_DIR="{{ nvm_install_dir }}"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+    node --version
+  args:
+    executable: /bin/bash
+  register: node_version
+  changed_when: false
+  become_user: "{{ ansible_user }}"
+
+- name: Display Node.js version
+  debug:
+    msg: "Node.js {{ node_version.stdout }} installed successfully"

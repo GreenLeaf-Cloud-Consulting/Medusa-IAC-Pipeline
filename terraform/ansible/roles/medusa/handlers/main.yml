@@ -1,0 +1,12 @@
+---
+- name: Restart Medusa backend
+  shell: |
+    cd {{ medusa_app_dir }}
+    docker-compose restart backend
+  become_user: "{{ ansible_user }}"
+
+- name: Restart Medusa storefront
+  systemd:
+    name: medusa-storefront
+    state: restarted
+    daemon_reload: yes

@@ -1,0 +1,74 @@
+---
+# PostgreSQL PRIMARY Configuration
+
+- name: Configure postgresql.conf for PRIMARY
+  lineinfile:
+    path: /etc/postgresql/15/main/postgresql.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backup: yes
+  loop:
+    - { regexp: '^#?listen_addresses', line: "listen_addresses = '*'" }
+    - { regexp: '^#?wal_level', line: "wal_level = replica" }
+    - { regexp: '^#?max_wal_senders', line: "max_wal_senders = 10" }
+    - { regexp: '^#?max_replication_slots', line: "max_replication_slots = 10" }
+    - { regexp: '^#?wal_keep_size', line: "wal_keep_size = 1GB" }
+    - { regexp: '^#?hot_standby', line: "hot_standby = on" }
+    - { regexp: '^#?archive_mode', line: "archive_mode = on" }
+    - { regexp: '^#?archive_command', line: "archive_command = '/bin/true'" }
+  become: yes
+  notify: restart postgresql
+
+- name: Create replication user
+  postgresql_user:
+    name: "{{ postgresql_replication_user }}"
+    password: "{{ postgresql_replication_password }}"
+    role_attr_flags: REPLICATION,LOGIN
+  become: yes
+  become_user: postgres
+
+- name: Configure pg_hba.conf for replication
+  blockinfile:
+    path: /etc/postgresql/15/main/pg_hba.conf
+    block: |
+      # Replication connections
+      host    replication     {{ postgresql_replication_user }}     0.0.0.0/0               md5
+      host    {{ postgresql_database }}     {{ postgresql_user }}     0.0.0.0/0               md5
+    marker: "# {mark} ANSIBLE MANAGED REPLICATION BLOCK"
+    backup: yes
+  become: yes
+  notify: restart postgresql
+
+- name: Create replication slot for each replica
+  postgresql_query:
+    db: postgres
+    query: "SELECT * FROM pg_create_physical_replication_slot('{{ item }}') WHERE NOT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = '{{ item }}')"
+  loop:
+    - replica_france_1
+    - replica_germany_1
+  become: yes
+  become_user: postgres
+  ignore_errors: yes
+
+- name: Ensure PostgreSQL is restarted if config changed
+  meta: flush_handlers
+
+- name: Wait for PostgreSQL to be ready
+  postgresql_ping:
+    db: postgres
+  become: yes
+  become_user: postgres
+  retries: 5
+  delay: 3
+
+- name: Display PRIMARY status
+  postgresql_query:
+    db: postgres
+    query: "SELECT * FROM pg_stat_replication"
+  become: yes
+  become_user: postgres
+  register: replication_status
+
+- name: Show replication status
+  debug:
+    msg: "Replication status: {{ replication_status }}"
