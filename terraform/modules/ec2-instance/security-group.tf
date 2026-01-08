@@ -41,6 +41,10 @@ resource "aws_security_group" "instance_sg" {
 
   tags = {
     Name        = "${var.environment}-${var.instance_name}-app-sg"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }

@@ -13,7 +13,11 @@ resource "aws_key_pair" "db_key" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-db-key"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
@@ -61,7 +65,11 @@ resource "aws_security_group" "database" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-db-sg"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
@@ -78,7 +86,11 @@ resource "aws_ebs_volume" "primary_data" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-db-primary-data"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
     Type        = "database"
   }
 }
@@ -121,7 +133,11 @@ resource "aws_instance" "primary" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-db-primary"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
     Role        = "database-primary"
     Region      = var.region_name
     ManagedBy   = "Terraform"
@@ -154,7 +170,11 @@ resource "aws_ebs_volume" "replica_data" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}-data"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
     Type        = "database-replica"
   }
 }
@@ -197,7 +217,11 @@ resource "aws_instance" "replica" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
     Role        = "database-replica"
     Region      = var.region_name
     ManagedBy   = "Terraform"
@@ -226,7 +250,11 @@ resource "aws_eip" "primary" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-db-primary-eip"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
