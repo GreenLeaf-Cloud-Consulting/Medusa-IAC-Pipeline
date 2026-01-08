@@ -14,7 +14,11 @@ resource "aws_lb" "main" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-alb"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
     Region      = var.region_name
     ManagedBy   = "Terraform"
   }
@@ -55,7 +59,11 @@ resource "aws_security_group" "alb" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-alb-sg"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
@@ -87,7 +95,11 @@ resource "aws_lb_target_group" "medusa_backend" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-medusa-tg"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
@@ -115,7 +127,11 @@ resource "aws_lb_target_group" "medusa_storefront" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-storefront-tg"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 

@@ -23,9 +23,13 @@ resource "aws_instance" "debian_instance" {
   associate_public_ip_address = var.enable_public_ip
 
   tags = {
-    Environment = var.environment
-    Region      = var.region
     Name        = "${var.environment}-${var.instance_name}-app"
+    Project     = "greenleaf"
+    Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
+    Region      = var.region
     Role        = "medusa-app"
   }
 

@@ -8,7 +8,11 @@ resource "aws_vpc" "main" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-vpc"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
     Region      = var.region_name
     ManagedBy   = "Terraform"
   }
@@ -20,7 +24,11 @@ resource "aws_internet_gateway" "main" {
 
   tags = {
     Name        = "${var.environment}-${var.region_name}-igw"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
@@ -36,7 +44,11 @@ resource "aws_subnet" "public" {
   tags = {
     Name        = "${var.environment}-${var.region_name}-public-subnet-${count.index + 1}"
     Type        = "public"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
@@ -51,7 +63,11 @@ resource "aws_subnet" "private" {
   tags = {
     Name        = "${var.environment}-${var.region_name}-private-subnet-${count.index + 1}"
     Type        = "private"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
@@ -67,7 +83,11 @@ resource "aws_route_table" "public" {
   tags = {
     Name        = "${var.environment}-${var.region_name}-public-rt"
     Type        = "public"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
@@ -91,7 +111,11 @@ resource "aws_route_table" "private" {
   tags = {
     Name        = "${var.environment}-${var.region_name}-private-rt"
     Type        = "private"
+    Project     = "greenleaf"
     Environment = var.environment
+    Application = "medusa"
+    Owner       = "equipe@greenleaf.com"
+    CostCenter  = "ecommerce"
   }
 }
 
