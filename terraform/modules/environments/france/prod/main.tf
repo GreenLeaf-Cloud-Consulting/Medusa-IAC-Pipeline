@@ -9,8 +9,17 @@ provider "aws" {
   region = "eu-west-2" # London
 }
 
+variable "personal_prefix" {
+  description = "Personal prefix to avoid conflicts between team members"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+}
+
 locals {
-  environment = "prod"
   region_name = "france"
   ami_debian_x86  = "ami-0f0f149abf454a472" # (optionnel) Debian 12 x86_64 eu-west-2
   ami_debian_arm  = "ami-0acc7dd449f810b83" # (optionnel) Debian 12 ARM64 eu-west-2
@@ -41,9 +50,10 @@ data "aws_ami" "debian12_arm64" {
 module "vpc" {
   source = "../../../vpc"
 
-  environment  = local.environment
-  region_name  = local.region_name
-  vpc_cidr     = "10.0.0.0/16"
+  personal_prefix = var.personal_prefix
+  environment     = var.environment
+  region_name     = local.region_name
+  vpc_cidr        = "10.0.0.0/16"
 
   availability_zones = [
     "eu-west-2a",
@@ -65,7 +75,8 @@ module "vpc" {
 module "alb" {
   source = "../../../alb"
 
-  environment             = local.environment
+  personal_prefix         = var.personal_prefix
+  environment             = var.environment
   region_name             = local.region_name
   vpc_id                  = module.vpc.vpc_id
   public_subnet_ids       = module.vpc.public_subnet_ids
@@ -84,7 +95,8 @@ module "alb" {
 module "database_primary" {
   source = "../../../database"
 
-  environment       = local.environment
+  personal_prefix   = var.personal_prefix
+  environment       = var.environment
   region_name       = local.region_name
   vpc_id            = module.vpc.vpc_id
   subnet_id         = module.vpc.public_subnet_ids[0]
@@ -114,7 +126,8 @@ module "database_primary" {
 module "database_replica_france" {
   source = "../../../database"
 
-  environment       = local.environment
+  personal_prefix   = var.personal_prefix
+  environment       = var.environment
   region_name       = "${local.region_name}-replica"
   vpc_id            = module.vpc.vpc_id
   subnet_id         = module.vpc.public_subnet_ids[1]
@@ -145,11 +158,12 @@ module "database_replica_france" {
 module "app_instance_1" {
   source = "../../../ec2-instance"
 
-  environment   = local.environment
-  region        = "eu-west-2"
-  instance_name = "app-1"
-  ami           = data.aws_ami.debian12_arm64.id
-  instance_type = "t4g.small"
+  personal_prefix = var.personal_prefix
+  environment     = var.environment
+  region          = "eu-west-2"
+  instance_name   = "app-1"
+  ami             = data.aws_ami.debian12_arm64.id
+  instance_type   = "t4g.small"
 
   vpc_id                      = module.vpc.vpc_id
   subnet_id                   = module.vpc.public_subnet_ids[0]
@@ -166,11 +180,12 @@ module "app_instance_1" {
 module "app_instance_2" {
   source = "../../../ec2-instance"
 
-  environment   = local.environment
-  region        = "eu-west-2"
-  instance_name = "app-2"
-  ami           = data.aws_ami.debian12_arm64.id
-  instance_type = "t4g.small"
+  personal_prefix = var.personal_prefix
+  environment     = var.environment
+  region          = "eu-west-2"
+  instance_name   = "app-2"
+  ami             = data.aws_ami.debian12_arm64.id
+  instance_type   = "t4g.small"
 
   vpc_id                      = module.vpc.vpc_id
   subnet_id                   = module.vpc.public_subnet_ids[1]

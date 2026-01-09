@@ -19,18 +19,16 @@ services:
       retries: 5
 
   medusa:
-    image: node:20-alpine
+    build:
+      context: {{ medusa_app_dir }}
+      dockerfile: Dockerfile
+    image: medusa-backend:latest
     container_name: medusa-backend
     restart: unless-stopped
-    working_dir: /app
-    volumes:
-      - {{ medusa_app_dir }}:/app
     ports:
       - "{{ medusa_backend_port }}:{{ medusa_backend_port }}"
     env_file:
       - {{ medusa_app_dir }}/.env
-    command: >
-      sh -c "npm install -g pnpm && pnpm install && pnpm build && pnpm start"
     depends_on:
       redis:
         condition: service_healthy
@@ -41,7 +39,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 300s
+      start_period: 120s
 
 volumes:
   redis_data:

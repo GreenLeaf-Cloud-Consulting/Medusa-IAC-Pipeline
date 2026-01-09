@@ -1,3 +1,8 @@
+variable "personal_prefix" {
+  description = "Personal prefix to avoid conflicts between team members"
+  type        = string
+}
+
 variable "allowed_ports" {
   description = "List of allowed ports for the security group"
   type    = list(number)

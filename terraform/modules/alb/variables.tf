@@ -1,3 +1,8 @@
+variable "personal_prefix" {
+  description = "Personal prefix to avoid conflicts between team members"
+  type        = string
+}
+
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string

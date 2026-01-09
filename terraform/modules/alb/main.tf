@@ -2,7 +2,7 @@
 # Crée un ALB pour distribuer le trafic entre les instances Medusa
 
 resource "aws_lb" "main" {
-  name               = "${var.environment}-${var.region_name}-alb"
+  name               = "${var.personal_prefix}-${var.environment}-${var.region_name}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
@@ -13,7 +13,7 @@ resource "aws_lb" "main" {
   enable_cross_zone_load_balancing = true
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-alb"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-alb"
     Environment = var.environment
     Region      = var.region_name
     ManagedBy   = "Terraform"
@@ -22,7 +22,7 @@ resource "aws_lb" "main" {
 
 # Security Group pour l'ALB
 resource "aws_security_group" "alb" {
-  name        = "${var.environment}-${var.region_name}-alb-sg"
+  name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-alb-sg"
   description = "Security group for ${var.environment} ALB in ${var.region_name}"
   vpc_id      = var.vpc_id
 
@@ -54,14 +54,14 @@ resource "aws_security_group" "alb" {
   }
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-alb-sg"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-alb-sg"
     Environment = var.environment
   }
 }
 
 # Target Group pour Medusa backend
 resource "aws_lb_target_group" "medusa_backend" {
-  name     = "${var.environment}-${var.region_name}-medusa-tg"
+  name     = "${var.personal_prefix}-${var.environment}-${var.region_name}-medusa-tg"
   port     = var.medusa_backend_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -86,7 +86,7 @@ resource "aws_lb_target_group" "medusa_backend" {
   }
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-medusa-tg"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-medusa-tg"
     Environment = var.environment
   }
 }
@@ -95,7 +95,7 @@ resource "aws_lb_target_group" "medusa_backend" {
 resource "aws_lb_target_group" "medusa_storefront" {
   count = var.enable_storefront ? 1 : 0
 
-  name     = "${var.environment}-${var.region_name}-storefront-tg"
+  name     = "${var.personal_prefix}-${var.environment}-${var.region_name}-storefront-tg"
   port     = var.medusa_storefront_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -114,7 +114,7 @@ resource "aws_lb_target_group" "medusa_storefront" {
   deregistration_delay = 30
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-storefront-tg"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-storefront-tg"
     Environment = var.environment
   }
 }

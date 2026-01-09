@@ -4,7 +4,7 @@ resource "tls_private_key" "ssh_key" {
 }
 
 resource "aws_key_pair" "generated_key" {
-  key_name   = "key-${var.environment}-${var.region}-${var.instance_name}"
+  key_name   = "key-${var.personal_prefix}-${var.environment}-${var.region}-${var.instance_name}"
   public_key = tls_private_key.ssh_key.public_key_openssh
 }
 
@@ -25,7 +25,7 @@ resource "aws_instance" "debian_instance" {
   tags = {
     Environment = var.environment
     Region      = var.region
-    Name        = "${var.environment}-${var.instance_name}-app"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.instance_name}-app"
     Role        = "medusa-app"
   }
 
@@ -42,6 +42,6 @@ resource "aws_lb_target_group_attachment" "app" {
 
 resource "local_file" "ssh_private_key" {
   content  = tls_private_key.ssh_key.private_key_pem
-  filename = "${path.root}/keys/${var.environment}-${var.region}-${var.instance_name}-key.pem"
+  filename = "${path.root}/keys/${var.personal_prefix}-${var.environment}-${var.region}-${var.instance_name}-key.pem"
   file_permission = "0400"
 }

@@ -8,18 +8,18 @@ resource "tls_private_key" "db_ssh_key" {
 }
 
 resource "aws_key_pair" "db_key" {
-  key_name   = "${var.environment}-${var.region_name}-db-key"
+  key_name   = "${var.personal_prefix}-${var.environment}-${var.region_name}-db-key"
   public_key = tls_private_key.db_ssh_key.public_key_openssh
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-key"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-db-key"
     Environment = var.environment
   }
 }
 
 # Security Group pour les instances DB
 resource "aws_security_group" "database" {
-  name        = "${var.environment}-${var.region_name}-db-sg"
+  name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-db-sg"
   description = "Security group for ${var.environment} database instances in ${var.region_name}"
   vpc_id      = var.vpc_id
 
@@ -60,7 +60,7 @@ resource "aws_security_group" "database" {
   }
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-sg"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-db-sg"
     Environment = var.environment
   }
 }
@@ -77,7 +77,7 @@ resource "aws_ebs_volume" "primary_data" {
   encrypted         = true
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-primary-data"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-db-primary-data"
     Environment = var.environment
     Type        = "database"
   }
@@ -116,11 +116,11 @@ resource "aws_instance" "primary" {
                 vim
 
               # Set hostname
-              hostnamectl set-hostname ${var.environment}-${var.region_name}-db-primary
+              hostnamectl set-hostname ${var.personal_prefix}-${var.environment}-${var.region_name}-db-primary
               EOF
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-primary"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-db-primary"
     Environment = var.environment
     Role        = "database-primary"
     Region      = var.region_name
@@ -153,7 +153,7 @@ resource "aws_ebs_volume" "replica_data" {
   encrypted         = true
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}-data"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-db-replica-${count.index + 1}-data"
     Environment = var.environment
     Type        = "database-replica"
   }
@@ -192,11 +192,11 @@ resource "aws_instance" "replica" {
                 vim
 
               # Set hostname
-              hostnamectl set-hostname ${var.environment}-${var.region_name}-db-replica-${count.index + 1}
+              hostnamectl set-hostname ${var.personal_prefix}-${var.environment}-${var.region_name}-db-replica-${count.index + 1}
               EOF
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-db-replica-${count.index + 1}"
     Environment = var.environment
     Role        = "database-replica"
     Region      = var.region_name
@@ -225,7 +225,7 @@ resource "aws_eip" "primary" {
   instance = aws_instance.primary[0].id
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-primary-eip"
+    Name        = "${var.personal_prefix}-${var.environment}-${var.region_name}-db-primary-eip"
     Environment = var.environment
   }
 }
@@ -233,6 +233,6 @@ resource "aws_eip" "primary" {
 # Sauvegarder la clé SSH privée
 resource "local_file" "db_ssh_private_key" {
   content         = tls_private_key.db_ssh_key.private_key_pem
-  filename        = "${path.root}/keys/${var.environment}-${var.region_name}-db-key.pem"
+  filename        = "${path.root}/keys/${var.personal_prefix}-${var.environment}-${var.region_name}-db-key.pem"
   file_permission = "0400"
 }

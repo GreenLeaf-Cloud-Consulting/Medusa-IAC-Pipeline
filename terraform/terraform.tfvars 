@@ -1,0 +1,39 @@
+# ==========================================
+# CONFIGURATION PERSONNELLE
+# ==========================================
+# Copiez ce fichier vers terraform.tfvars et modifiez les valeurs
+# cp terraform.tfvars.example terraform.tfvars
+
+# ==========================================
+# PRÉFIXE PERSONNEL (REQUIS)
+# ==========================================
+# Utilisez votre prénom ou vos initiales pour éviter les conflits
+# avec les autres membres de l'équipe
+# Exemples: "alice", "bob", "jd", "marie", "thomas"
+personal_prefix = "jugurta"
+
+# ==========================================
+# ENVIRONNEMENT (REQUIS)
+# ==========================================
+# dev     = Développement (recommandé pour travail en équipe)
+# staging = Pré-production
+# prod    = Production (réservé au responsable)
+environment = "dev"
+
+# ==========================================
+# EXEMPLES DE NOMS DE RESSOURCES
+# ==========================================
+# Avec personal_prefix = "jugurta" et environment = "dev":
+#   - ALB France: jugurta-dev-france-alb
+#   - ALB Germany: jugurta-dev-germany-alb
+#   - Target Group: jugurta-dev-france-medusa-tg
+#   - Security Group: jugurta-dev-france-alb-sg
+#   - VPC France: jugurta-dev-france-vpc
+#   - Instance App: jugurta-dev-app-1-app
+#   - Database Primary: jugurta-dev-france-db-primary
+#
+# Avec personal_prefix = "alice" et environment = "dev":
+#   - ALB France: alice-dev-france-alb
+#   - ALB Germany: alice-dev-germany-alb
+#   - Target Group: alice-dev-france-medusa-tg
+#   - etc.

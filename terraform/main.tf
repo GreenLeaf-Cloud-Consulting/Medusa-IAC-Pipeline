@@ -24,11 +24,17 @@ terraform {
 # ==================== FRANCE PRODUCTION ====================
 module "france_prod" {
   source = "./modules/environments/france/prod"
+
+  personal_prefix = var.personal_prefix
+  environment     = var.environment
 }
 
 # ==================== GERMANY PRODUCTION ====================
 module "germany_prod" {
   source = "./modules/environments/germany/prod"
+
+  personal_prefix = var.personal_prefix
+  environment     = var.environment
 }
 
 # ==========================================
@@ -73,6 +79,10 @@ output "germany_database" {
 
 resource "local_file" "ansible_inventory" {
   content = templatefile("${path.module}/ansible-inventory.tpl", {
+    # Personal Configuration
+    personal_prefix = var.personal_prefix
+    environment     = var.environment
+
     # France App Instances
     france_app_1_public_ip  = module.france_prod.app_instance_1_public_ip
     france_app_1_private_ip = module.france_prod.app_instance_1_private_ip

@@ -1,4 +1,12 @@
 ---
+- name: Copy Dockerfile for Medusa backend
+  template:
+    src: Dockerfile.j2
+    dest: "{{ medusa_app_dir }}/Dockerfile"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
 - name: Copy docker-compose file for Redis + Medusa
   template:
     src: docker-compose-redis.yml.j2
@@ -6,6 +14,24 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: '0644'
+
+- name: Check if Medusa Docker image exists
+  shell: sg docker -c "docker images -q medusa-backend:latest"
+  register: image_check
+  become: true
+  become_user: "{{ ansible_user }}"
+  when: use_docker_deployment | default(true)
+  changed_when: false
+
+- name: Build Medusa Docker image (only if not exists or force rebuild)
+  shell: |
+    cd {{ medusa_app_dir }}
+    sg docker -c "docker-compose build medusa"
+  become: true
+  become_user: "{{ ansible_user }}"
+  when:
+    - use_docker_deployment | default(true)
+    - image_check.stdout == "" or force_rebuild | default(false)
 
 - name: Start Redis and Medusa backend with Docker Compose
   shell: |
@@ -17,31 +43,50 @@
 
 - name: Wait for backend container to be healthy
   shell: |
+    # Wait for the build to complete and backend to become healthy
+    max=30   # number of iterations (5 minutes total)
     i=1
-    while [ $i -le 30 ]; do
-      STATUS=$(docker inspect --format='{% raw %}{{.State.Health.Status}}{% endraw %}' medusa-backend 2>/dev/null || echo "starting")
-      if [ "$STATUS" = "healthy" ]; then
-        echo "Backend is healthy"
+    while [ $i -le $max ]; do
+      echo "Waiting for backend... ($i/$max) Status: $(docker inspect --format='{% raw %}{{.State.Health.Status}}{% endraw %}' medusa-backend 2>/dev/null || echo "starting")"
+
+      # Check if container is healthy
+      HEALTH=$(docker inspect --format='{% raw %}{{.State.Health.Status}}{% endraw %}' medusa-backend 2>/dev/null || echo "starting")
+
+      if [ "$HEALTH" = "healthy" ]; then
+        echo "✅ Backend is healthy!"
         exit 0
       fi
-      echo "Waiting for backend... ($i/30) Status: $STATUS"
+
+      # Check if container has exited (build failed)
+      STATUS=$(docker inspect --format='{% raw %}{{.State.Status}}{% endraw %}' medusa-backend 2>/dev/null || echo "unknown")
+      if [ "$STATUS" = "exited" ]; then
+        echo "❌ Container exited unexpectedly!"
+        echo "Last 100 lines of logs:"
+        docker logs --tail 100 medusa-backend 2>&1 || true
+        exit 1
+      fi
+
       sleep 10
       i=$((i + 1))
     done
     echo "Backend did not become healthy in time"
+    echo "Last 100 lines of logs:"
+    docker logs --tail 100 medusa-backend 2>&1 || true
     exit 1
+  args:
+    executable: /bin/bash
+  register: health_check_output
+  failed_when: health_check_output.rc != 0
   when: use_docker_deployment | default(true)
 
-- name: Run Medusa migrations
-  shell: |
-    cd {{ medusa_app_dir }}
-    sg docker -c "docker-compose exec -T backend npx medusa migrations run"
-  become: true
-  become_user: "{{ ansible_user }}"
+- name: Display health check output
+  debug:
+    var: health_check_output.stdout_lines
   when:
     - use_docker_deployment | default(true)
-    - run_migrations | default(true)
-  ignore_errors: true
+    - health_check_output is defined
+
+# Migrations are now run automatically in the container startup command
 
 - name: Create admin user
   shell: |

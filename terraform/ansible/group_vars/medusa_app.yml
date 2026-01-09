@@ -20,7 +20,8 @@ database_type: postgres
 
 # France: utilise le PRIMARY local
 # Germany: utilise le REPLICA local
-database_host: "{{ hostvars[groups['database_primary'][0]]['private_ip'] if region == 'france' else hostvars[groups['database_replicas'] | select('search', region) | list | first]['private_ip'] }}"
+# All app servers connect to PRIMARY database in France
+database_host: "{{ hostvars[groups['database_primary'][0]]['private_ip'] }}"
 
 database_url: "postgres://{{ postgresql_user }}:{{ postgresql_password }}@{{ database_host }}:5432/{{ postgresql_database }}"
 

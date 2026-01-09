@@ -1,0 +1,33 @@
+FROM node:20-alpine
+
+# Install build dependencies
+RUN apk add --no-cache wget
+
+# Set working directory
+WORKDIR /app
+
+# Install pnpm globally
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
+
+# Install dependencies with auto-install-peers
+RUN pnpm install --shamefully-hoist
+
+# Rebuild native packages
+RUN pnpm rebuild
+
+# Copy application code
+COPY . .
+
+# Build the application (backend + admin frontend)
+# This is done once during image build, not at runtime
+ENV NODE_OPTIONS=--max-old-space-size=2048
+RUN pnpm build
+
+# Expose port
+EXPOSE {{ medusa_backend_port }}
+
+# Start the application with migrations
+CMD ["sh", "-c", "npx medusa db:migrate && pnpm start"]

@@ -20,39 +20,39 @@ all:
       children:
         france_app:
           hosts:
-            france-prod-app-1:
+            ${personal_prefix}-${environment}-france-app-1:
               ansible_host: ${france_app_1_public_ip}
               private_ip: ${france_app_1_private_ip}
-              ansible_ssh_private_key_file: ${keys_path}/prod-${france_aws_region}-app-1-key.pem
-              environment: prod
+              ansible_ssh_private_key_file: ${keys_path}/${personal_prefix}-${environment}-${france_aws_region}-app-1-key.pem
+              environment: ${environment}
               region: france
               role: medusa-app
 
-            france-prod-app-2:
+            ${personal_prefix}-${environment}-france-app-2:
               ansible_host: ${france_app_2_public_ip}
               private_ip: ${france_app_2_private_ip}
-              ansible_ssh_private_key_file: ${keys_path}/prod-${france_aws_region}-app-2-key.pem
-              environment: prod
+              ansible_ssh_private_key_file: ${keys_path}/${personal_prefix}-${environment}-${france_aws_region}-app-2-key.pem
+              environment: ${environment}
               region: france
               role: medusa-app
 
         france_database:
           hosts:
-            france-prod-db-primary:
+            ${personal_prefix}-${environment}-france-db-primary:
               ansible_host: ${france_db_primary_public_ip}
               private_ip: ${france_db_primary_private_ip}
-              ansible_ssh_private_key_file: ${keys_path}/prod-france-db-key.pem
-              environment: prod
+              ansible_ssh_private_key_file: ${keys_path}/${personal_prefix}-${environment}-france-db-key.pem
+              environment: ${environment}
               region: france
               role: database-primary
               db_type: primary
 
 %{ for idx, ip in france_db_replica_private_ips ~}
-            france-prod-db-replica-${idx + 1}:
+            ${personal_prefix}-${environment}-france-db-replica-${idx + 1}:
               ansible_host: ${ip}
               private_ip: ${ip}
-              ansible_ssh_private_key_file: ${keys_path}/prod-france-db-key.pem
-              environment: prod
+              ansible_ssh_private_key_file: ${keys_path}/${personal_prefix}-${environment}-france-replica-db-key.pem
+              environment: ${environment}
               region: france
               role: database-replica
               db_type: replica
@@ -67,30 +67,30 @@ all:
       children:
         germany_app:
           hosts:
-            germany-prod-app-1:
+            ${personal_prefix}-${environment}-germany-app-1:
               ansible_host: ${germany_app_1_public_ip}
               private_ip: ${germany_app_1_private_ip}
-              ansible_ssh_private_key_file: ${keys_path}/prod-${germany_aws_region}-app-1-key.pem
-              environment: prod
+              ansible_ssh_private_key_file: ${keys_path}/${personal_prefix}-${environment}-${germany_aws_region}-app-1-key.pem
+              environment: ${environment}
               region: germany
               role: medusa-app
 
-            germany-prod-app-2:
+            ${personal_prefix}-${environment}-germany-app-2:
               ansible_host: ${germany_app_2_public_ip}
               private_ip: ${germany_app_2_private_ip}
-              ansible_ssh_private_key_file: ${keys_path}/prod-${germany_aws_region}-app-2-key.pem
-              environment: prod
+              ansible_ssh_private_key_file: ${keys_path}/${personal_prefix}-${environment}-${germany_aws_region}-app-2-key.pem
+              environment: ${environment}
               region: germany
               role: medusa-app
 
         germany_database:
           hosts:
 %{ for idx, ip in germany_db_replica_private_ips ~}
-            germany-prod-db-replica-${idx + 1}:
+            ${personal_prefix}-${environment}-germany-db-replica-${idx + 1}:
               ansible_host: ${ip}
               private_ip: ${ip}
-              ansible_ssh_private_key_file: ${keys_path}/prod-germany-db-key.pem
-              environment: prod
+              ansible_ssh_private_key_file: ${keys_path}/${personal_prefix}-${environment}-germany-db-key.pem
+              environment: ${environment}
               region: germany
               role: database-replica
               db_type: replica
@@ -113,13 +113,13 @@ all:
 
     database_primary:
       hosts:
-        france-prod-db-primary:
+        ${personal_prefix}-${environment}-france-db-primary:
 
     database_replicas:
       hosts:
 %{ for idx, ip in france_db_replica_private_ips ~}
-        france-prod-db-replica-${idx + 1}:
+        ${personal_prefix}-${environment}-france-db-replica-${idx + 1}:
 %{ endfor ~}
 %{ for idx, ip in germany_db_replica_private_ips ~}
-        germany-prod-db-replica-${idx + 1}:
+        ${personal_prefix}-${environment}-germany-db-replica-${idx + 1}:
 %{ endfor ~}
