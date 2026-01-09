@@ -8,11 +8,11 @@ resource "tls_private_key" "db_ssh_key" {
 }
 
 resource "aws_key_pair" "db_key" {
-  key_name   = "${var.environment}-${var.region_name}-db-key"
+  key_name   = "${var.environment}-${var.region_name}-db-key-rayane"
   public_key = tls_private_key.db_ssh_key.public_key_openssh
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-key"
+    Name        = "${var.environment}-${var.region_name}-db-key-rayane"
     Project     = "greenleaf"
     Environment = var.environment
     Application = "medusa"
@@ -23,7 +23,7 @@ resource "aws_key_pair" "db_key" {
 
 # Security Group pour les instances DB
 resource "aws_security_group" "database" {
-  name        = "${var.environment}-${var.region_name}-db-sg"
+  name        = "${var.environment}-${var.region_name}-db-sg-rayane"
   description = "Security group for ${var.environment} database instances in ${var.region_name}"
   vpc_id      = var.vpc_id
 
@@ -45,6 +45,18 @@ resource "aws_security_group" "database" {
     self        = true
   }
 
+  # PostgreSQL depuis les autres régions (cross-region replication)  
+  dynamic "ingress" {
+    for_each = length(var.peer_database_cidr_blocks) > 0 ? [1] : []
+    content {
+      description = "PostgreSQL from cross-region databases"
+      from_port   = 5432
+      to_port     = 5432
+      protocol    = "tcp"
+      cidr_blocks = var.peer_database_cidr_blocks
+    }
+  }
+
   # SSH pour administration (optionnel, à restreindre)
   ingress {
     description = "SSH for administration"
@@ -64,7 +76,7 @@ resource "aws_security_group" "database" {
   }
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-sg"
+    Name        = "${var.environment}-${var.region_name}-db-sg-rayane"
     Project     = "greenleaf"
     Environment = var.environment
     Application = "medusa"
@@ -85,7 +97,7 @@ resource "aws_ebs_volume" "primary_data" {
   encrypted         = true
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-primary-data"
+    Name        = "${var.environment}-${var.region_name}-db-primary-data-rayane"
     Project     = "greenleaf"
     Environment = var.environment
     Application = "medusa"
@@ -104,7 +116,8 @@ resource "aws_instance" "primary" {
   key_name      = aws_key_pair.db_key.key_name
   subnet_id     = var.subnet_id
 
-  vpc_security_group_ids = [aws_security_group.database.id]
+  vpc_security_group_ids      = [aws_security_group.database.id]
+  associate_public_ip_address = true
 
   root_block_device {
     volume_type           = "gp3"
@@ -132,7 +145,7 @@ resource "aws_instance" "primary" {
               EOF
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-primary"
+    Name        = "${var.environment}-${var.region_name}-db-primary-rayane"
     Project     = "greenleaf"
     Environment = var.environment
     Application = "medusa"
@@ -169,7 +182,7 @@ resource "aws_ebs_volume" "replica_data" {
   encrypted         = true
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}-data"
+    Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}-data-rayane"
     Project     = "greenleaf"
     Environment = var.environment
     Application = "medusa"
@@ -188,7 +201,8 @@ resource "aws_instance" "replica" {
   key_name      = aws_key_pair.db_key.key_name
   subnet_id     = var.subnet_id
 
-  vpc_security_group_ids = [aws_security_group.database.id]
+  vpc_security_group_ids      = [aws_security_group.database.id]
+  associate_public_ip_address = true
 
   root_block_device {
     volume_type           = "gp3"
@@ -216,7 +230,7 @@ resource "aws_instance" "replica" {
               EOF
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}"
+    Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}-rayane"
     Project     = "greenleaf"
     Environment = var.environment
     Application = "medusa"
@@ -249,7 +263,7 @@ resource "aws_eip" "primary" {
   instance = aws_instance.primary[0].id
 
   tags = {
-    Name        = "${var.environment}-${var.region_name}-db-primary-eip"
+    Name        = "${var.environment}-${var.region_name}-db-primary-eip-rayane"
     Project     = "greenleaf"
     Environment = var.environment
     Application = "medusa"

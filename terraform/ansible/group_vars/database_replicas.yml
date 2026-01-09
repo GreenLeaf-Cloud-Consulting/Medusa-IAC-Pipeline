@@ -13,4 +13,4 @@ postgresql_replication_user: replicator
 postgresql_replication_password: "{{ lookup('env', 'POSTGRES_REPLICATION_PASSWORD') | default('replicator_change_me', true) }}"
 
 # Replication slot name (set dynamically per host)
-replication_slot_name: "replica_{{ region }}_{{ environment }}"
+replication_slot_name: "replica_{{ region }}_{{ env_name }}"

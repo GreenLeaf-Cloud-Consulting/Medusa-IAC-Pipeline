@@ -5,7 +5,7 @@
 medusa_app_dir: "/home/{{ ansible_user }}/medusa"
 medusa_backend_port: 9000
 medusa_storefront_port: 8000
-deploy_storefront: false  # Pas de storefront pour l'instant
+deploy_storefront: false # Pas de storefront pour l'instant
 
 # Git repository
 medusa_git_repo: "https://github.com/GreenLeaf-Cloud-Consulting/Aws-Medusa-Infra.git"
@@ -15,12 +15,11 @@ medusa_git_branch: "main"
 github_access_token: "{{ lookup('env', 'GITHUB_ACCESS_TOKEN') | default('') }}"
 
 # Database connection (externe - pas Docker)
-# L'IP de la DB sera définie dynamiquement par région
+# IMPORTANT: Toutes les régions doivent écrire dans le PRIMARY (France)
+# Les replicas sont en READ-ONLY et ne peuvent pas accepter de writes
 database_type: postgres
 
-# France: utilise le PRIMARY local
-# Germany: utilise le REPLICA local
-database_host: "{{ hostvars[groups['database_primary'][0]]['private_ip'] if region == 'france' else hostvars[groups['database_replicas'] | select('search', region) | list | first]['private_ip'] }}"
+database_host: "{{ hostvars[groups['database_primary'][0]]['private_ip'] if region == 'france' else hostvars[groups['database_primary'][0]]['ansible_host'] }}"
 
 database_url: "postgres://{{ postgresql_user }}:{{ postgresql_password }}@{{ database_host }}:5432/{{ postgresql_database }}"
 
@@ -31,9 +30,12 @@ redis_url: "redis://localhost:6379"
 jwt_secret: "{{ lookup('env', 'MEDUSA_JWT_SECRET') | default('change_me_jwt_secret', true) }}"
 cookie_secret: "{{ lookup('env', 'MEDUSA_COOKIE_SECRET') | default('change_me_cookie_secret', true) }}"
 
-# CORS
-store_cors: "http://localhost:8000"
-admin_cors: "http://localhost:7001,http://localhost:9000"
+# CORS - Allow ALB URLs and localhost for development
+# ALB URLs are dynamically loaded from Terraform outputs via environment variables
+france_alb_url: "{{ lookup('env', 'FRANCE_ALB_URL') | default('http://localhost:8080', true) }}"
+germany_alb_url: "{{ lookup('env', 'GERMANY_ALB_URL') | default('http://localhost:8081', true) }}"
+store_cors: "http://localhost:8000,{{ france_alb_url }},{{ germany_alb_url }}"
+admin_cors: "http://localhost:7001,http://localhost:9000,{{ france_alb_url }},{{ germany_alb_url }}"
 
 # Node environment
 node_env: production

@@ -1,41 +1,68 @@
 ---
-- name: Copy docker-compose file for Redis + Medusa
-  template:
-    src: docker-compose-redis.yml.j2
-    dest: "{{ medusa_app_dir }}/docker-compose.yml"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0644'
-
-- name: Start Redis and Medusa backend with Docker Compose
+- name: Installer pnpm globalement avec npm via NVM
   shell: |
-    cd {{ medusa_app_dir }}
-    sg docker -c "docker-compose up -d"
-  become: true
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    npm install -g pnpm
+  args:
+    executable: /bin/bash
+  become: yes
   become_user: "{{ ansible_user }}"
+
+- name: Patch medusa-config.ts to include Redis URL
+  lineinfile:
+    path: "{{ medusa_app_dir }}/medusa-config.ts"
+    insertafter: "databaseUrl: process.env.DATABASE_URL,"
+    line: "    redisUrl: process.env.REDIS_URL,"
   when: use_docker_deployment | default(true)
 
-- name: Wait for backend container to be healthy
-  shell: |
-    i=1
-    while [ $i -le 30 ]; do
-      STATUS=$(docker inspect --format='{% raw %}{{.State.Health.Status}}{% endraw %}' medusa-backend 2>/dev/null || echo "starting")
-      if [ "$STATUS" = "healthy" ]; then
-        echo "Backend is healthy"
-        exit 0
-      fi
-      echo "Waiting for backend... ($i/30) Status: $STATUS"
-      sleep 10
-      i=$((i + 1))
-    done
-    echo "Backend did not become healthy in time"
-    exit 1
+- name: Configure Vite allowedHosts to accept all hosts (ALB URLs)
+  lineinfile:
+    path: "{{ medusa_app_dir }}/medusa-config.ts"
+    regexp: '^\s*allowedHosts:'
+    line: "        allowedHosts: true,"
+    insertafter: "strictPort: false,"
   when: use_docker_deployment | default(true)
+
+- name: Installer les dépendances du projet avec pnpm
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    pnpm install
+  args:
+    chdir: "{{ medusa_app_dir }}"
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ ansible_user }}"
+
+- name: Lancer Docker Compose pour démarrer les conteneurs
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    sg docker -c "pnpm run docker:prod:up"
+  args:
+    chdir: "{{ medusa_app_dir }}"
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ ansible_user }}"
+  register: make_output
+  changed_when: false
+
+- name: Afficher la sortie de Make up
+  debug:
+    msg: "{{ make_output.stdout }}"
+
+- name: Attendre que le backend soit prêt
+  wait_for:
+    port: 9000
+    delay: 10
+    timeout: 300
+    host: localhost
 
 - name: Run Medusa migrations
   shell: |
     cd {{ medusa_app_dir }}
-    sg docker -c "docker-compose exec -T backend npx medusa migrations run"
+    sg docker -c "docker-compose exec -T medusa npx medusa db:migrate"
   become: true
   become_user: "{{ ansible_user }}"
   when:
@@ -46,7 +73,7 @@
 - name: Create admin user
   shell: |
     cd {{ medusa_app_dir }}
-    sg docker -c "docker-compose exec -T backend npx medusa user -e {{ medusa_admin_email }} -p {{ medusa_admin_password }}"
+    sg docker -c "docker-compose exec -T medusa npx medusa user -e {{ medusa_admin_email }} -p {{ medusa_admin_password }}"
   become: true
   become_user: "{{ ansible_user }}"
   when:

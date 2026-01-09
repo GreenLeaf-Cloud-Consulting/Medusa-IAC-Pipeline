@@ -83,6 +83,7 @@ resource "local_file" "ansible_inventory" {
     france_db_primary_public_ip  = module.france_prod.database_primary_public_ip
     france_db_primary_private_ip = module.france_prod.database_primary_private_ip
     france_db_replica_private_ips = module.france_prod.database_replica_france_private_ips
+    france_db_replica_public_ips = module.france_prod.database_replica_france_public_ips
 
     # Germany App Instances
     germany_app_1_public_ip  = module.germany_prod.app_instance_1_public_ip
@@ -92,6 +93,7 @@ resource "local_file" "ansible_inventory" {
 
     # Germany Database
     germany_db_replica_private_ips = module.germany_prod.database_replica_germany_private_ips
+    germany_db_replica_public_ips = module.germany_prod.database_replica_germany_public_ips
 
     # Configuration
     ssh_user  = "admin"

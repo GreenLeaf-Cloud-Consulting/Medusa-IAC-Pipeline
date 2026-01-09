@@ -68,6 +68,11 @@ output "database_replica_france_private_ips" {
   value       = module.database_replica_france.replica_instance_private_ips
 }
 
+output "database_replica_france_public_ips" {
+  description = "Public IPs of France Replica Database"
+  value       = module.database_replica_france.replica_instance_public_ips
+}
+
 # ==================== CONNECTION INFO ====================
 output "app_instances_info" {
   description = "Information about all app instances"
@@ -96,6 +101,7 @@ output "database_info" {
     replica_france = {
       ids         = module.database_replica_france.replica_instance_ids
       private_ips = module.database_replica_france.replica_instance_private_ips
+      public_ips  = module.database_replica_france.replica_instance_public_ips
     }
   }
 }

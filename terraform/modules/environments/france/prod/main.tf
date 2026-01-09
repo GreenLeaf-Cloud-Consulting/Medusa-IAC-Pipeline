@@ -107,6 +107,9 @@ module "database_primary" {
     module.app_instance_2.security_group_id
   ]
 
+  # Allow cross-region replication from Germany replica (using public IP)
+  peer_database_cidr_blocks = ["0.0.0.0/0"]  # À restreindre avec l'IP publique de Germany
+
   ssh_cidr_blocks = ["0.0.0.0/0"]
 }
 
@@ -136,6 +139,9 @@ module "database_replica_france" {
     module.app_instance_1.security_group_id,
     module.app_instance_2.security_group_id
   ]
+
+  # Allow cross-region replication from Germany replica
+  peer_database_cidr_blocks = []
 
   ssh_cidr_blocks = ["0.0.0.0/0"]
 }

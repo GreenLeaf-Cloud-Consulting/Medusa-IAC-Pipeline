@@ -1,7 +1,7 @@
 ---
 # Git configuration
 git_generate_ssh_key: true
-medusa_git_repo: ""
+medusa_git_repo: "GreenLeaf-Cloud-Consulting/Medusa.git"
 medusa_git_branch: "main"
 
 # Application directories
@@ -19,7 +19,9 @@ use_systemd_service: true
 medusa_backend_port: 9000
 medusa_storefront_port: 8000
 run_migrations: true
-create_admin_user: false
+create_admin_user: true
+medusa_admin_email: "admin@example.com"
+medusa_admin_password: "supersecret123"
 
 # Node configuration
 nvm_install_dir: "/home/{{ ansible_user }}/.nvm"
