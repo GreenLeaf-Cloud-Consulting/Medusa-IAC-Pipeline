@@ -124,3 +124,24 @@ output "database_ssh_private_key" {
   value       = module.database_primary.ssh_private_key_pem
   sensitive   = true
 }
+
+# ==================== MONITORING ====================
+output "sns_topic_arn" {
+  description = "ARN du SNS Topic pour les alarmes CloudWatch"
+  value       = aws_sns_topic.cloudwatch_alarms.arn
+}
+
+output "lambda_function_name" {
+  description = "Nom de la fonction Lambda pour les notifications Discord"
+  value       = aws_lambda_function.discord_notifier.function_name
+}
+
+output "cloudwatch_alarms" {
+  description = "Noms des alarmes CloudWatch configurées"
+  value = {
+    app1_high_cpu             = aws_cloudwatch_metric_alarm.app1_high_cpu.alarm_name
+    app2_high_cpu             = aws_cloudwatch_metric_alarm.app2_high_cpu.alarm_name
+    db_primary_high_cpu       = aws_cloudwatch_metric_alarm.db_primary_high_cpu.alarm_name
+    db_replica_france_high_cpu = aws_cloudwatch_metric_alarm.db_replica_france_high_cpu.alarm_name
+  }
+}
