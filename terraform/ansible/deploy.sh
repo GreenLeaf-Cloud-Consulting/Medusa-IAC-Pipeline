@@ -61,6 +61,13 @@ echo "✅ DÉPLOIEMENT TERMINÉ !"
 echo "========================================="
 echo ""
 echo "📍 URLs de test:"
-echo "   France:  http://prod-france-alb-883605802.eu-west-3.elb.amazonaws.com/"
-echo "   Germany: http://prod-germany-alb-735857198.eu-central-1.elb.amazonaws.com/"
+
+# Récupérer les vraies URLs depuis Terraform
+cd ../
+FRANCE_URL=$(terraform output -raw france_alb_url 2>/dev/null || echo "N/A")
+GERMANY_URL=$(terraform output -raw germany_alb_url 2>/dev/null || echo "N/A")
+cd ansible/
+
+echo "   France:  $FRANCE_URL"
+echo "   Germany: $GERMANY_URL"
 echo ""
