@@ -105,3 +105,15 @@ variable "primary_ip_address" {
   type        = string
   default     = ""
 }
+
+variable "peer_database_security_group_ids" {
+  description = "List of security group IDs for other database instances (for replication)"
+  type        = list(string)
+  default     = []
+}
+
+variable "peer_database_cidr_blocks" {
+  description = "List of CIDR blocks for cross-region database replication"
+  type        = list(string)
+  default     = []
+}

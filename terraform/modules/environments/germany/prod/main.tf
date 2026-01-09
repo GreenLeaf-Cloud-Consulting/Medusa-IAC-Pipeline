@@ -108,6 +108,9 @@ module "database_replica_germany" {
     module.app_instance_2.security_group_id
   ]
 
+  # Allow outbound to France PRIMARY for replication (using public IP)
+  peer_database_cidr_blocks = []  # Not needed for replica, only PRIMARY needs to accept incoming
+
   ssh_cidr_blocks = ["0.0.0.0/0"]
 }
 

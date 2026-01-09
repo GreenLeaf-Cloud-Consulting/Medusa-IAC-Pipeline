@@ -53,6 +53,11 @@ output "database_replica_germany_private_ips" {
   value       = module.database_replica_germany.replica_instance_private_ips
 }
 
+output "database_replica_germany_public_ips" {
+  description = "Public IPs of Germany Replica Database"
+  value       = module.database_replica_germany.replica_instance_public_ips
+}
+
 # ==================== CONNECTION INFO ====================
 output "app_instances_info" {
   description = "Information about all app instances"
@@ -76,6 +81,7 @@ output "database_info" {
     replica_germany = {
       ids         = module.database_replica_germany.replica_instance_ids
       private_ips = module.database_replica_germany.replica_instance_private_ips
+      public_ips  = module.database_replica_germany.replica_instance_public_ips
     }
   }
 }

@@ -12,7 +12,7 @@
   become: yes
   roles:
     - role: system
-      tags: ['system', 'setup', 'base']
+      tags: ["system", "setup", "base"]
 
 # ==========================================
 # PHASE 2: Installation PostgreSQL
@@ -24,7 +24,7 @@
   become: yes
   roles:
     - role: postgresql
-      tags: ['postgresql', 'database', 'primary']
+      tags: ["postgresql", "database", "primary"]
 
 # Wait for PRIMARY to be ready
 - name: Wait for PRIMARY database to be fully operational
@@ -33,16 +33,16 @@
     - name: Wait 30 seconds for PRIMARY to stabilize
       pause:
         seconds: 30
-      tags: ['postgresql', 'database']
+      tags: ["postgresql", "database"]
 
 # REPLICA Databases
 - name: Setup REPLICA PostgreSQL Databases
   hosts: database_replicas
   become: yes
-  serial: 1  # Deploy replicas one at a time
+  serial: 1 # Deploy replicas one at a time
   roles:
     - role: postgresql
-      tags: ['postgresql', 'database', 'replica']
+      tags: ["postgresql", "database", "replica"]
 
 # ==========================================
 # PHASE 3: Configuration App Instances
@@ -53,10 +53,10 @@
   become: yes
   roles:
     - role: docker
-      tags: ['docker', 'setup', 'app']
+      tags: ["docker", "setup", "app"]
 
     - role: nodejs
-      tags: ['nodejs', 'setup', 'app']
+      tags: ["nodejs", "setup", "app"]
 
 # ==========================================
 # PHASE 4: Déploiement Medusa
@@ -67,7 +67,7 @@
   become: yes
   roles:
     - role: medusa
-      tags: ['medusa', 'application', 'deploy']
+      tags: ["medusa", "application", "deploy"]
 
 # ==========================================
 # PHASE 5: Vérifications finales
@@ -86,9 +86,9 @@
           - "📍 Instance: {{ inventory_hostname }}"
           - "   Role: {{ role }}"
           - "   Region: {{ region }}"
-          - "   Environment: {{ environment }}"
+          - "   Environment: {{ env_name }}"
           - ""
-      tags: ['always']
+      tags: ["always"]
 
     - name: Display database information
       debug:
@@ -97,7 +97,7 @@
           - "   Type: {{ db_type }}"
           - "   IP: {{ private_ip }}"
       when: "'database' in role"
-      tags: ['always']
+      tags: ["always"]
 
     - name: Display app information
       debug:
@@ -106,7 +106,7 @@
           - "   Backend: http://{{ private_ip }}:9000"
           - "   Accessible via ALB"
       when: "'app' in role"
-      tags: ['always']
+      tags: ["always"]
 
 - name: Display global information
   hosts: localhost
@@ -123,6 +123,6 @@
           - "📋 Pour vérifier:"
           - "   - France ALB: Voir output Terraform"
           - "   - Germany ALB: Voir output Terraform"
-          - "   - Réplication DB: ansible database_primary -a 'sudo -u postgres psql -c \"SELECT * FROM pg_stat_replication;\"'"
+          - '   - Réplication DB: ansible database_primary -a ''sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"'''
           - ""
-      tags: ['always']
+      tags: ["always"]

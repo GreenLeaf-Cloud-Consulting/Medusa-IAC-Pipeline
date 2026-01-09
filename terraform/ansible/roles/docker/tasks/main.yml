@@ -11,16 +11,16 @@
 
 - name: Add Docker GPG key
   apt_key:
-    url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+    url: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
     state: present
 
 - name: Detect system architecture
   set_fact:
-    docker_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+    docker_arch: "{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
 
 - name: Add Docker repository
   apt_repository:
-    repo: "deb [arch={{ docker_arch }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+    repo: "deb [arch={{ docker_arch }}] https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }} {{ ansible_facts['distribution_release'] }} stable"
     state: present
 
 - name: Install Docker CE
@@ -46,9 +46,9 @@
 
 - name: Install Docker Compose
   get_url:
-    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_machine }}"
+    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_facts['system'] }}-{{ ansible_facts['machine'] }}"
     dest: /usr/local/bin/docker-compose
-    mode: '0755'
+    mode: "0755"
 
 - name: Verify Docker Compose installation
   command: docker-compose --version

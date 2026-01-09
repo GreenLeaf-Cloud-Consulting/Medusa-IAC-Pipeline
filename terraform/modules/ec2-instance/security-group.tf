@@ -1,5 +1,5 @@
 resource "aws_security_group" "instance_sg" {
-  name_prefix = "${var.environment}-${var.instance_name}-app-sg-"
+  name_prefix = "${var.environment}-${var.instance_name}-app-sg-rayane-"
   description = "Security group for ${var.environment} ${var.instance_name} app instance"
   vpc_id      = var.vpc_id
 
@@ -40,7 +40,7 @@ resource "aws_security_group" "instance_sg" {
   }
 
   tags = {
-    Name        = "${var.environment}-${var.instance_name}-app-sg"
+    Name        = "${var.environment}-${var.instance_name}-app-sg-rayane"
     Project     = "greenleaf"
     Environment = var.environment
     Application = "medusa"

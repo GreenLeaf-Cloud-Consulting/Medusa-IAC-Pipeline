@@ -7,8 +7,8 @@ is_primary_region: false
 
 # Database configuration (Germany replica)
 # Override with actual values from Terraform/AWS
-database_url: "{{ lookup('env', 'GERMANY_DATABASE_URL') | default('postgres://medusa:medusa@localhost:5432/medusa_germany', true) }}"
-redis_url: "{{ lookup('env', 'GERMANY_REDIS_URL') | default('redis://localhost:6379', true) }}"
+# database_url: "{{ lookup('env', 'GERMANY_DATABASE_URL') | default('postgres://medusa:medusa@localhost:5432/medusa_germany', true) }}"
+# redis_url: "{{ lookup('env', 'GERMANY_REDIS_URL') | default('redis://localhost:6379', true) }}"
 
 # CORS configuration
 store_cors: "{{ lookup('env', 'GERMANY_STORE_CORS') | default('http://localhost:8000', true) }}"

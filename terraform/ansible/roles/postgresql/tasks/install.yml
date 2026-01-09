@@ -79,3 +79,14 @@
   become: yes
   become_user: postgres
   when: db_type == 'primary'
+
+- name: Grant schema privileges to Medusa user
+  postgresql_privs:
+    database: "{{ postgresql_database }}"
+    objs: public
+    privs: ALL
+    type: schema
+    role: "{{ postgresql_user }}"
+  become: yes
+  become_user: postgres
+  when: db_type == 'primary'

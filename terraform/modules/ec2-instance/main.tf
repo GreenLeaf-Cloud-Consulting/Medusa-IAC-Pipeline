@@ -4,7 +4,7 @@ resource "tls_private_key" "ssh_key" {
 }
 
 resource "aws_key_pair" "generated_key" {
-  key_name   = "key-${var.environment}-${var.region}-${var.instance_name}"
+  key_name   = "key-${var.environment}-${var.region}-${var.instance_name}-rayane"
   public_key = tls_private_key.ssh_key.public_key_openssh
 }
 
@@ -22,6 +22,13 @@ resource "aws_instance" "debian_instance" {
   subnet_id                   = var.subnet_id != "" ? var.subnet_id : null
   associate_public_ip_address = var.enable_public_ip
 
+  root_block_device {
+    volume_size           = 20  # GB
+    volume_type           = "gp3"
+    delete_on_termination = true
+    encrypted             = false
+  }
+
   tags = {
     Name        = "${var.environment}-${var.instance_name}-app"
     Project     = "greenleaf"
@@ -30,6 +37,7 @@ resource "aws_instance" "debian_instance" {
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     Region      = var.region
+    Name        = "${var.environment}-${var.instance_name}-app-rayane"
     Role        = "medusa-app"
   }
 

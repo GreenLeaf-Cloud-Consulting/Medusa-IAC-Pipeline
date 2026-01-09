@@ -27,7 +27,7 @@
     state: directory
     owner: postgres
     group: postgres
-    mode: '0700'
+    mode: "0700"
   become: yes
   when: not replica_initialized.stat.exists
 
@@ -37,7 +37,7 @@
     dest: /var/lib/postgresql/.pgpass
     owner: postgres
     group: postgres
-    mode: '0600'
+    mode: "0600"
   become: yes
   when: not replica_initialized.stat.exists
 
@@ -59,7 +59,6 @@
   environment:
     PGPASSWORD: "{{ postgresql_replication_password }}"
   register: pg_basebackup_result
-  failed_when: false
 
 - name: Display pg_basebackup result
   debug:
@@ -73,9 +72,15 @@
     line: "{{ item.line }}"
     backup: yes
   loop:
-    - { regexp: '^#?hot_standby', line: "hot_standby = on" }
-    - { regexp: '^#?primary_conninfo', line: "primary_conninfo = 'host={{ primary_db_ip }} port=5432 user={{ postgresql_replication_user }} password={{ postgresql_replication_password }} application_name={{ ansible_hostname }}'" }
-    - { regexp: '^#?primary_slot_name', line: "primary_slot_name = '{{ replication_slot_name }}'" }
+    - { regexp: "^#?hot_standby", line: "hot_standby = on" }
+    - {
+        regexp: "^#?primary_conninfo",
+        line: "primary_conninfo = 'host={{ primary_db_ip }} port=5432 user={{ postgresql_replication_user }} password={{ postgresql_replication_password }} application_name={{ ansible_hostname }}'",
+      }
+    - {
+        regexp: "^#?primary_slot_name",
+        line: "primary_slot_name = '{{ replication_slot_name }}'",
+      }
   become: yes
 
 - name: Create standby.signal file
@@ -84,7 +89,7 @@
     state: touch
     owner: postgres
     group: postgres
-    mode: '0600'
+    mode: "0600"
   become: yes
   when: not replica_initialized.stat.exists
 
