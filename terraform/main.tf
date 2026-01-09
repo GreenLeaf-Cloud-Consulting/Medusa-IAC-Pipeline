@@ -35,6 +35,37 @@ module "germany_prod" {
   source = "./modules/environments/germany/prod"
 }
 
+# ==================== SHARED S3 BUCKET ====================
+# Bucket S3 global partagé entre France et Germany pour les assets Medusa
+module "s3_global" {
+  source = "./modules/s3"
+
+  # On utilise eu-west-1 (Irlande) comme région neutre entre France et Germany
+  providers = {
+    aws = aws.ireland
+  }
+
+  personal_prefix = var.personal_prefix
+  environment     = "prod"
+  region_short    = "global"
+
+  enable_versioning = true
+  cors_allowed_origins = [
+    "http://${module.france_prod.alb_url}",
+    "http://${module.germany_prod.alb_url}",
+    "http://localhost:9000",
+    "http://localhost:7001"
+  ]
+
+  create_iam_role = true
+}
+
+# Provider pour le bucket S3 (région neutre)
+provider "aws" {
+  alias  = "ireland"
+  region = "eu-west-1"
+}
+
 # ==========================================
 # OUTPUTS - Informations de connexion
 # ==========================================
@@ -69,6 +100,22 @@ output "germany_app_instances" {
 output "germany_database" {
   description = "Instances Database Germany"
   value       = module.germany_prod.database_info
+}
+
+# S3 Global
+output "s3_bucket_name" {
+  description = "Nom du bucket S3 partagé pour les assets Medusa"
+  value       = module.s3_global.bucket_name
+}
+
+output "s3_bucket_arn" {
+  description = "ARN du bucket S3"
+  value       = module.s3_global.bucket_arn
+}
+
+output "s3_iam_policy_arn" {
+  description = "ARN de la policy IAM pour accès S3"
+  value       = module.s3_global.iam_policy_arn
 }
 
 # ==========================================
@@ -134,6 +181,10 @@ output "deployment_complete" {
        ALB: ${module.germany_prod.alb_url}
        App 1: ${module.germany_prod.app_instance_1_public_ip}
        App 2: ${module.germany_prod.app_instance_2_public_ip}
+
+    🪣 S3 STORAGE (Partagé entre France et Germany):
+       Bucket: ${module.s3_global.bucket_name}
+       Region: eu-west-1 (Ireland)
 
     📝 Prochaine étape:
        cd ansible && ansible-playbook -i inventory/hosts.yml site.yml
