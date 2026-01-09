@@ -1,0 +1,207 @@
+# France Production Environment - AVEC AUTOSCALING
+# Cette version utilise l'Auto Scaling au lieu d'instances EC2 statiques
+
+terraform {
+  required_version = ">= 1.0"
+}
+
+provider "aws" {
+  region = "eu-west-2" # London
+}
+
+locals {
+  environment = "prod"
+  region_name = "france"
+}
+
+# ✅ AMI Debian 12 ARM64 la plus récente (dans eu-west-2)
+data "aws_ami" "debian12_arm64" {
+  most_recent = true
+  owners      = ["136693071363"] # Debian officiel sur AWS
+
+  filter {
+    name   = "name"
+    values = ["debian-12-arm64-*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["arm64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+# ==================== VPC ====================
+module "vpc" {
+  source = "../../../vpc"
+
+  environment  = local.environment
+  region_name  = local.region_name
+  vpc_cidr     = "10.0.0.0/16"
+
+  availability_zones = [
+    "eu-west-2a",
+    "eu-west-2b"
+  ]
+
+  public_subnet_cidrs = [
+    "10.0.1.0/24",
+    "10.0.2.0/24"
+  ]
+
+  private_subnet_cidrs = [
+    "10.0.11.0/24",
+    "10.0.12.0/24"
+  ]
+}
+
+# ==================== ALB ====================
+module "alb" {
+  source = "../../../alb"
+
+  environment             = local.environment
+  region_name             = local.region_name
+  vpc_id                  = module.vpc.vpc_id
+  public_subnet_ids       = module.vpc.public_subnet_ids
+
+  medusa_backend_port     = 9000
+  medusa_storefront_port  = 8000
+
+  enable_deletion_protection = false
+  enable_storefront          = false
+  enable_https               = false
+  enable_https_redirect      = false
+}
+
+# ==================== DATABASE ====================
+# Primary Database (France)
+module "database_primary" {
+  source = "../../../database"
+
+  environment       = local.environment
+  region_name       = local.region_name
+  vpc_id            = module.vpc.vpc_id
+  subnet_id         = module.vpc.public_subnet_ids[0]
+  availability_zone = module.vpc.availability_zones[0]
+  ami               = data.aws_ami.debian12_arm64.id
+
+  is_primary        = true
+  instance_type     = "t4g.small"
+  replica_count     = 0
+
+  ebs_volume_size   = 30
+  ebs_volume_type   = "gp3"
+  ebs_iops          = 3000
+  ebs_throughput    = 125
+
+  allocate_eip      = true
+
+  # IMPORTANT: Autoriser le security group de l'autoscaling
+  app_security_group_ids = [
+    module.autoscaling.security_group_id
+  ]
+
+  peer_database_cidr_blocks = ["0.0.0.0/0"]
+  ssh_cidr_blocks = ["0.0.0.0/0"]
+}
+
+# Replica Database (France)
+module "database_replica_france" {
+  source = "../../../database"
+
+  environment       = local.environment
+  region_name       = "${local.region_name}-replica"
+  vpc_id            = module.vpc.vpc_id
+  subnet_id         = module.vpc.public_subnet_ids[1]
+  availability_zone = module.vpc.availability_zones[1]
+  ami               = data.aws_ami.debian12_arm64.id
+
+  is_primary            = false
+  replica_instance_type = "t4g.small"
+  replica_count         = 1
+
+  replica_ebs_volume_size = 30
+  ebs_volume_type         = "gp3"
+  ebs_iops                = 3000
+  ebs_throughput          = 125
+
+  primary_ip_address = module.database_primary.primary_instance_private_ip
+
+  app_security_group_ids = [
+    module.autoscaling.security_group_id
+  ]
+
+  peer_database_cidr_blocks = []
+  ssh_cidr_blocks = ["0.0.0.0/0"]
+}
+
+# ==================== AUTO SCALING GROUP ====================
+# 🚀 NOUVEAU: Remplace les 2 instances statiques par un ASG
+module "autoscaling" {
+  source = "../../../autoscaling"
+
+  environment             = local.environment
+  region                  = local.region_name
+  ami                     = data.aws_ami.debian12_arm64.id
+  instance_type           = "t4g.small"
+  vpc_id                  = module.vpc.vpc_id
+  subnet_ids              = module.vpc.public_subnet_ids
+  alb_target_group_arn    = module.alb.target_group_backend_arn
+  enable_public_ip        = true
+
+  # Configuration de l'autoscaling
+  min_size         = 2    # Minimum 2 instances
+  max_size         = 6    # Maximum 6 instances
+  desired_capacity = 2    # Démarre avec 2 instances
+
+  # Règles de sécurité additionnelles
+  security_group_ingress_rules = [
+    {
+      from_port   = 5432
+      to_port     = 5432
+      protocol    = "tcp"
+      cidr_blocks = ["10.0.0.0/16"]
+      description = "PostgreSQL from VPC"
+    }
+  ]
+}
+
+# ==================== OUTPUTS ====================
+
+output "alb_url" {
+  description = "URL de l'ALB France"
+  value       = module.alb.alb_url
+}
+
+output "asg_name" {
+  description = "Nom de l'Auto Scaling Group"
+  value       = module.autoscaling.asg_name
+}
+
+output "database_info" {
+  description = "Informations de la base de données"
+  value = {
+    primary_public_ip  = module.database_primary.primary_instance_public_ip
+    primary_private_ip = module.database_primary.primary_instance_private_ip
+  }
+}
+
+output "database_primary_public_ip" {
+  value = module.database_primary.primary_instance_public_ip
+}
+
+output "database_primary_private_ip" {
+  value = module.database_primary.primary_instance_private_ip
+}
+
+output "database_replica_france_public_ips" {
+  value = module.database_replica_france.replica_instances_public_ips
+}
+
+output "database_replica_france_private_ips" {
+  value = module.database_replica_france.replica_instances_private_ips
+}
