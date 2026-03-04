@@ -31,12 +31,17 @@ module "germany_prod" {
   source = "./modules/environments/germany/prod"
 }
 
+# ==================== SWEDEN PRODUCTION ====================
+module "sweden_prod" {
+  source = "./modules/environments/sweden/prod"
+}
+
 # ==================== SHARED S3 BUCKET ====================
-# Bucket S3 global partagé entre France et Germany pour les assets Medusa
+# Bucket S3 global partagé entre France, Germany et Sweden pour les assets Medusa
 module "s3_global" {
   source = "./modules/s3"
 
-  # On utilise eu-west-1 (Irlande) comme région neutre entre France et Germany
+  # On utilise eu-west-1 (Irlande) comme région neutre
   providers = {
     aws = aws.ireland
   }
@@ -49,6 +54,7 @@ module "s3_global" {
   cors_allowed_origins = [
     "http://${module.france_prod.alb_url}",
     "http://${module.germany_prod.alb_url}",
+    "http://${module.sweden_prod.alb_url}",
     "http://localhost:9000",
     "http://localhost:7001"
   ]
@@ -112,6 +118,75 @@ output "s3_bucket_arn" {
 output "s3_iam_policy_arn" {
   description = "ARN de la policy IAM pour accès S3"
   value       = module.s3_global.iam_policy_arn
+}
+
+# EKS France
+output "france_eks_cluster_name" {
+  description = "Nom du cluster EKS France"
+  value       = module.france_prod.eks_cluster_name
+}
+
+output "france_eks_cluster_endpoint" {
+  description = "Endpoint du cluster EKS France"
+  value       = module.france_prod.eks_cluster_endpoint
+}
+
+output "france_eks_kubeconfig_command" {
+  description = "Commande kubectl pour le cluster EKS France"
+  value       = module.france_prod.eks_kubeconfig_command
+}
+
+# EKS Germany
+output "germany_eks_cluster_name" {
+  description = "Nom du cluster EKS Germany"
+  value       = module.germany_prod.eks_cluster_name
+}
+
+output "germany_eks_cluster_endpoint" {
+  description = "Endpoint du cluster EKS Germany"
+  value       = module.germany_prod.eks_cluster_endpoint
+}
+
+output "germany_eks_kubeconfig_command" {
+  description = "Commande kubectl pour le cluster EKS Germany"
+  value       = module.germany_prod.eks_kubeconfig_command
+}
+
+# Sweden
+output "sweden_alb_url" {
+  description = "URL de l'ALB Sweden"
+  value       = module.sweden_prod.alb_url
+}
+
+output "sweden_app_instances" {
+  description = "Instances App Sweden"
+  value       = module.sweden_prod.app_instances_info
+}
+
+output "sweden_database" {
+  description = "Instances Database Sweden"
+  value       = module.sweden_prod.database_info
+}
+
+output "sweden_eks_cluster_name" {
+  description = "Nom du cluster EKS Sweden"
+  value       = module.sweden_prod.eks_cluster_name
+}
+
+output "sweden_eks_kubeconfig_command" {
+  description = "Commande kubectl pour le cluster EKS Sweden"
+  value       = module.sweden_prod.eks_kubeconfig_command
+}
+
+# CloudWatch France
+output "france_cloudwatch_dashboard_url" {
+  description = "URL du dashboard CloudWatch France"
+  value       = module.france_prod.cloudwatch_dashboard_url
+}
+
+output "france_cloudwatch_sns_topic_arn" {
+  description = "ARN du topic SNS pour les alertes France"
+  value       = module.france_prod.cloudwatch_sns_topic_arn
 }
 
 # ==========================================

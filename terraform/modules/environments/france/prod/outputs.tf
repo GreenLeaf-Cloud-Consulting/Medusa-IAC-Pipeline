@@ -124,3 +124,45 @@ output "database_ssh_private_key" {
   value       = module.database_primary.ssh_private_key_pem
   sensitive   = true
 }
+
+# ==================== EKS ====================
+output "eks_cluster_name" {
+  description = "Name of the EKS cluster"
+  value       = module.eks.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  description = "API endpoint of the EKS cluster"
+  value       = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_arn" {
+  description = "ARN of the EKS cluster"
+  value       = module.eks.cluster_arn
+}
+
+output "eks_node_group_status" {
+  description = "Status of the EKS node group"
+  value       = module.eks.node_group_status
+}
+
+output "eks_kubeconfig_command" {
+  description = "Command to configure kubectl for this cluster"
+  value       = module.eks.kubeconfig_command
+}
+
+# ==================== CLOUDWATCH ====================
+output "cloudwatch_sns_topic_arn" {
+  description = "ARN du topic SNS pour les alertes"
+  value       = module.cloudwatch.sns_topic_arn
+}
+
+output "cloudwatch_dashboard_url" {
+  description = "URL du dashboard CloudWatch"
+  value       = module.cloudwatch.dashboard_url
+}
+
+output "cloudwatch_alarm_arns" {
+  description = "ARNs des alarmes CloudWatch"
+  value       = module.cloudwatch.alarm_arns
+}

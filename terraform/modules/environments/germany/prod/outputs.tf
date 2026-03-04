@@ -104,3 +104,29 @@ output "database_ssh_private_key" {
   value       = module.database_replica_germany.ssh_private_key_pem
   sensitive   = true
 }
+
+# ==================== EKS ====================
+output "eks_cluster_name" {
+  description = "Name of the EKS cluster"
+  value       = module.eks.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  description = "API endpoint of the EKS cluster"
+  value       = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_arn" {
+  description = "ARN of the EKS cluster"
+  value       = module.eks.cluster_arn
+}
+
+output "eks_node_group_status" {
+  description = "Status of the EKS node group"
+  value       = module.eks.node_group_status
+}
+
+output "eks_kubeconfig_command" {
+  description = "Command to configure kubectl for this cluster"
+  value       = module.eks.kubeconfig_command
+}

@@ -1,22 +1,20 @@
-# Germany Production Environment
-# Architecture complète avec ALB, 2 App instances, 1 DB Replica
+# Sweden Production Environment (Stockholm)
+# Architecture complète avec ALB, 2 App instances, 1 DB Replica, EKS
 
 terraform {
   required_version = ">= 1.0"
 }
 
 provider "aws" {
-  region = "eu-central-1" # Frankfurt
+  region = "eu-north-1" # Stockholm
 }
 
 locals {
   environment = "prod"
-  region_name = "germany"
-  ami_debian_x86  = "ami-06c431709bcd3b51d" # (optionnel) Debian 12 x86_64 eu-central-1
-  ami_debian_arm  = "ami-0cadc0cd2c84f9c97" # (optionnel) Debian 12 ARM64 eu-central-1
+  region_name = "sweden"
 }
 
-# ✅ AMI Debian 12 ARM64 la plus récente (dans eu-central-1)
+# ✅ AMI Debian 12 ARM64 la plus récente (dans eu-north-1)
 data "aws_ami" "debian12_arm64" {
   most_recent = true
   owners      = ["136693071363"] # Debian officiel sur AWS
@@ -43,21 +41,21 @@ module "vpc" {
 
   environment  = local.environment
   region_name  = local.region_name
-  vpc_cidr     = "10.1.0.0/16"
+  vpc_cidr     = "10.2.0.0/16"
 
   availability_zones = [
-    "eu-central-1a",
-    "eu-central-1b"
+    "eu-north-1a",
+    "eu-north-1b"
   ]
 
   public_subnet_cidrs = [
-    "10.1.1.0/24",
-    "10.1.2.0/24"
+    "10.2.1.0/24",
+    "10.2.2.0/24"
   ]
 
   private_subnet_cidrs = [
-    "10.1.11.0/24",
-    "10.1.12.0/24"
+    "10.2.11.0/24",
+    "10.2.12.0/24"
   ]
 }
 
@@ -65,13 +63,13 @@ module "vpc" {
 module "alb" {
   source = "../../../alb"
 
-  environment             = local.environment
-  region_name             = local.region_name
-  vpc_id                  = module.vpc.vpc_id
-  public_subnet_ids       = module.vpc.public_subnet_ids
+  environment            = local.environment
+  region_name            = local.region_name
+  vpc_id                 = module.vpc.vpc_id
+  public_subnet_ids      = module.vpc.public_subnet_ids
 
-  medusa_backend_port     = 9000
-  medusa_storefront_port  = 8000
+  medusa_backend_port    = 9000
+  medusa_storefront_port = 8000
 
   enable_deletion_protection = false
   enable_storefront          = false
@@ -80,8 +78,8 @@ module "alb" {
 }
 
 # ==================== DATABASE ====================
-# Replica Database (Germany) - Connects to France Primary
-module "database_replica_germany" {
+# Replica Database (Sweden) - Connects to France Primary
+module "database_replica_sweden" {
   source = "../../../database"
 
   environment       = local.environment
@@ -100,18 +98,13 @@ module "database_replica_germany" {
   ebs_iops                = 3000
   ebs_throughput          = 125
 
-  # À remplir avec l'IP du Primary Database en France
-  # primary_ip_address = "PRIMARY_DB_IP_FROM_FRANCE"
-
   app_security_group_ids = [
     module.app_instance_1.security_group_id,
     module.app_instance_2.security_group_id
   ]
 
-  # Allow outbound to France PRIMARY for replication (using public IP)
-  peer_database_cidr_blocks = []  # Not needed for replica, only PRIMARY needs to accept incoming
-
-  ssh_cidr_blocks = ["0.0.0.0/0"]
+  peer_database_cidr_blocks = []
+  ssh_cidr_blocks           = ["0.0.0.0/0"]
 }
 
 # ==================== APP INSTANCES ====================
@@ -120,20 +113,20 @@ module "app_instance_1" {
   source = "../../../ec2-instance"
 
   environment   = local.environment
-  region        = "eu-central-1"
+  region        = "eu-north-1"
   instance_name = "app-1"
   ami           = data.aws_ami.debian12_arm64.id
   instance_type = "t4g.small"
 
-  vpc_id                      = module.vpc.vpc_id
-  subnet_id                   = module.vpc.public_subnet_ids[0]
-  enable_public_ip            = true
+  vpc_id                     = module.vpc.vpc_id
+  subnet_id                  = module.vpc.public_subnet_ids[0]
+  enable_public_ip           = true
 
-  alb_target_group_arn        = module.alb.target_group_backend_arn
-  alb_security_group_id       = module.alb.security_group_id
-  database_security_group_id  = module.database_replica_germany.security_group_id
+  alb_target_group_arn       = module.alb.target_group_backend_arn
+  alb_security_group_id      = module.alb.security_group_id
+  database_security_group_id = module.database_replica_sweden.security_group_id
 
-  ssh_user      = "admin"
+  ssh_user = "admin"
 }
 
 # App Instance 2
@@ -141,28 +134,28 @@ module "app_instance_2" {
   source = "../../../ec2-instance"
 
   environment   = local.environment
-  region        = "eu-central-1"
+  region        = "eu-north-1"
   instance_name = "app-2"
   ami           = data.aws_ami.debian12_arm64.id
   instance_type = "t4g.small"
 
-  vpc_id                      = module.vpc.vpc_id
-  subnet_id                   = module.vpc.public_subnet_ids[1]
-  enable_public_ip            = true
+  vpc_id                     = module.vpc.vpc_id
+  subnet_id                  = module.vpc.public_subnet_ids[1]
+  enable_public_ip           = true
 
-  alb_target_group_arn        = module.alb.target_group_backend_arn
-  alb_security_group_id       = module.alb.security_group_id
-  database_security_group_id  = module.database_replica_germany.security_group_id
+  alb_target_group_arn       = module.alb.target_group_backend_arn
+  alb_security_group_id      = module.alb.security_group_id
+  database_security_group_id = module.database_replica_sweden.security_group_id
 
-  ssh_user      = "admin"
+  ssh_user = "admin"
 }
 
 # ==================== EKS ====================
 module "eks" {
   source = "../../../eks"
 
-  environment  = local.environment
-  region_name  = local.region_name
-  vpc_id       = module.vpc.vpc_id
-  subnet_ids   = module.vpc.public_subnet_ids
+  environment = local.environment
+  region_name = local.region_name
+  vpc_id      = module.vpc.vpc_id
+  subnet_ids  = module.vpc.public_subnet_ids
 }

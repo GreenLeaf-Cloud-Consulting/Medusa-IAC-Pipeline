@@ -188,3 +188,32 @@ module "app_instance_2" {
 
   ssh_user      = "admin"
 }
+
+# ==================== EKS ====================
+module "eks" {
+  source = "../../../eks"
+
+  environment  = local.environment
+  region_name  = local.region_name
+  vpc_id       = module.vpc.vpc_id
+  subnet_ids   = module.vpc.public_subnet_ids
+}
+
+# ==================== CLOUDWATCH ====================
+module "cloudwatch" {
+  source = "../../../cloudwatch"
+
+  environment  = local.environment
+  region_name  = local.region_name
+  aws_region   = "eu-west-2"
+  alert_email  = "equipe@greenleaf.com"
+
+  instance_ids = [
+    module.app_instance_1.instance_id,
+    module.app_instance_2.instance_id,
+    module.database_primary.primary_instance_id,
+  ]
+
+  instance_names = ["app-1", "app-2", "db-primary"]
+  cpu_threshold  = 70
+}
