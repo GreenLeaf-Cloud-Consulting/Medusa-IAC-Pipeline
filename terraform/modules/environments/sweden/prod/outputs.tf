@@ -113,3 +113,35 @@ output "eks_node_group_status" {
 output "eks_kubeconfig_command" {
   value = module.eks.kubeconfig_command
 }
+
+# ==================== CLOUDWATCH ====================
+output "cloudwatch_sns_topic_arn" {
+  description = "ARN du topic SNS pour les alertes"
+  value       = module.cloudwatch.sns_topic_arn
+}
+
+output "cloudwatch_dashboard_url" {
+  description = "URL du dashboard CloudWatch"
+  value       = module.cloudwatch.dashboard_url
+}
+
+output "cloudwatch_alarm_arns" {
+  description = "ARNs des alarmes CloudWatch"
+  value       = module.cloudwatch.alarm_arns
+}
+
+# ==================== MONITORING ====================
+output "grafana_url" {
+  description = "Grafana web UI URL"
+  value       = module.monitoring.grafana_url
+}
+
+output "prometheus_url" {
+  description = "Prometheus web UI URL"
+  value       = module.monitoring.prometheus_url
+}
+
+output "monitoring_public_ip" {
+  description = "Public IP of the monitoring server"
+  value       = module.monitoring.monitoring_public_ip
+}

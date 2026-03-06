@@ -37,6 +37,27 @@ data "aws_ami" "debian12_arm64" {
   }
 }
 
+# AMI Debian 12 x86_64 la plus récente (pour monitoring t3.micro)
+data "aws_ami" "debian12_x86" {
+  most_recent = true
+  owners      = ["136693071363"]
+
+  filter {
+    name   = "name"
+    values = ["debian-12-amd64-*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 # ==================== VPC ====================
 module "vpc" {
   source = "../../../vpc"
@@ -92,7 +113,7 @@ module "database_primary" {
   ami               = data.aws_ami.debian12_arm64.id
 
   is_primary        = true
-  instance_type     = "t4g.small"
+  instance_type     = "t4g.micro"
   replica_count     = 0
 
   ebs_volume_size   = 30
@@ -125,7 +146,7 @@ module "database_replica_france" {
   ami               = data.aws_ami.debian12_arm64.id
 
   is_primary            = false
-  replica_instance_type = "t4g.small"
+  replica_instance_type = "t4g.micro"
   replica_count         = 1
 
   replica_ebs_volume_size = 30
@@ -154,8 +175,8 @@ module "app_instance_1" {
   environment   = local.environment
   region        = "eu-west-2"
   instance_name = "app-1"
-  ami           = data.aws_ami.debian12_arm64.id
-  instance_type = "t4g.small"
+  ami           = data.aws_ami.debian12_x86.id
+  instance_type = "t3.micro"
 
   vpc_id                      = module.vpc.vpc_id
   subnet_id                   = module.vpc.public_subnet_ids[0]
@@ -165,7 +186,8 @@ module "app_instance_1" {
   alb_security_group_id       = module.alb.security_group_id
   database_security_group_id  = module.database_primary.security_group_id
 
-  ssh_user      = "admin"
+  ssh_user  = "admin"
+  user_data = file("${path.module}/../../../monitoring/scripts/install_node_exporter.sh")
 }
 
 # App Instance 2
@@ -175,8 +197,8 @@ module "app_instance_2" {
   environment   = local.environment
   region        = "eu-west-2"
   instance_name = "app-2"
-  ami           = data.aws_ami.debian12_arm64.id
-  instance_type = "t4g.small"
+  ami           = data.aws_ami.debian12_x86.id
+  instance_type = "t3.micro"
 
   vpc_id                      = module.vpc.vpc_id
   subnet_id                   = module.vpc.public_subnet_ids[1]
@@ -186,7 +208,8 @@ module "app_instance_2" {
   alb_security_group_id       = module.alb.security_group_id
   database_security_group_id  = module.database_primary.security_group_id
 
-  ssh_user      = "admin"
+  ssh_user  = "admin"
+  user_data = file("${path.module}/../../../monitoring/scripts/install_node_exporter.sh")
 }
 
 # ==================== EKS ====================
@@ -216,4 +239,40 @@ module "cloudwatch" {
 
   instance_names = ["app-1", "app-2", "db-primary"]
   cpu_threshold  = 70
+
+  # Discord notifications
+  enable_discord_notifications = true
+  discord_webhook              = var.discord_webhook
+
+  # Budget FinOps
+  enable_budget      = true
+  budget_limit       = "100"
+  budget_alert_email = "vitomirlaces+greenleaf@gmail.com"
+}
+
+# ==================== MONITORING (Prometheus + Grafana) ====================
+module "monitoring" {
+  source = "../../../monitoring"
+
+  environment  = local.environment
+  region_name  = local.region_name
+  aws_region   = "eu-west-2"
+  vpc_id       = module.vpc.vpc_id
+  subnet_id    = module.vpc.public_subnet_ids[0]
+  ami           = data.aws_ami.debian12_x86.id
+  instance_type = "t3.micro"
+
+  grafana_admin_password = var.grafana_admin_password
+
+  monitored_instances = [
+    { name = "app-1",      private_ip = module.app_instance_1.instance_private_ip },
+    { name = "app-2",      private_ip = module.app_instance_2.instance_private_ip },
+    { name = "db-primary", private_ip = module.database_primary.primary_instance_private_ip },
+  ]
+
+  app_security_group_ids = [
+    module.app_instance_1.security_group_id,
+    module.app_instance_2.security_group_id,
+    module.database_primary.security_group_id,
+  ]
 }

@@ -13,21 +13,27 @@ resource "aws_security_group" "instance_sg" {
   }
 
   # Traffic depuis l'ALB - Backend
-  ingress {
-    description     = "HTTP from ALB"
-    from_port       = 9000
-    to_port         = 9000
-    protocol        = "tcp"
-    security_groups = [var.alb_security_group_id]
+  dynamic "ingress" {
+    for_each = var.alb_security_group_id != "" ? [1] : []
+    content {
+      description     = "HTTP from ALB"
+      from_port       = 9000
+      to_port         = 9000
+      protocol        = "tcp"
+      security_groups = [var.alb_security_group_id]
+    }
   }
 
   # Storefront depuis l'ALB
-  ingress {
-    description     = "Storefront from ALB"
-    from_port       = 8000
-    to_port         = 8000
-    protocol        = "tcp"
-    security_groups = [var.alb_security_group_id]
+  dynamic "ingress" {
+    for_each = var.alb_security_group_id != "" ? [1] : []
+    content {
+      description     = "Storefront from ALB"
+      from_port       = 8000
+      to_port         = 8000
+      protocol        = "tcp"
+      security_groups = [var.alb_security_group_id]
+    }
   }
 
   # Outbound - Tout autorisé

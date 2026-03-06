@@ -21,6 +21,7 @@ resource "aws_instance" "debian_instance" {
   vpc_security_group_ids      = [aws_security_group.instance_sg.id]
   subnet_id                   = var.subnet_id != "" ? var.subnet_id : null
   associate_public_ip_address = var.enable_public_ip
+  user_data                   = var.user_data
 
   root_block_device {
     volume_size           = 20  # GB
