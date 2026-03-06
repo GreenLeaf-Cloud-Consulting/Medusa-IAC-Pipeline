@@ -166,3 +166,19 @@ output "cloudwatch_alarm_arns" {
   description = "ARNs des alarmes CloudWatch"
   value       = module.cloudwatch.alarm_arns
 }
+
+# ==================== MONITORING ====================
+output "grafana_url" {
+  description = "Grafana web UI URL"
+  value       = module.monitoring.grafana_url
+}
+
+output "prometheus_url" {
+  description = "Prometheus web UI URL"
+  value       = module.monitoring.prometheus_url
+}
+
+output "monitoring_public_ip" {
+  description = "Public IP of the monitoring server"
+  value       = module.monitoring.monitoring_public_ip
+}

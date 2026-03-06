@@ -33,3 +33,65 @@ variable "cpu_threshold" {
   type        = number
   default     = 70
 }
+
+# --- Discord Lambda ---
+
+variable "discord_webhook" {
+  description = "Discord webhook URL for alarm notifications"
+  type        = string
+  default     = ""
+}
+
+variable "enable_discord_notifications" {
+  description = "Enable Discord notifications via Lambda"
+  type        = bool
+  default     = false
+}
+
+# --- Budget ---
+
+variable "enable_budget" {
+  description = "Enable AWS Budget alerts"
+  type        = bool
+  default     = false
+}
+
+variable "budget_limit" {
+  description = "Monthly budget limit in USD"
+  type        = string
+  default     = "100"
+}
+
+variable "budget_alert_email" {
+  description = "Email address for budget alert notifications"
+  type        = string
+  default     = ""
+}
+
+# --- Network Alarms ---
+
+variable "network_in_threshold" {
+  description = "Network In threshold in bytes (default 5MB)"
+  type        = number
+  default     = 5242880
+}
+
+variable "network_out_threshold" {
+  description = "Network Out threshold in bytes (default 5MB)"
+  type        = number
+  default     = 5242880
+}
+
+# --- EBS Alarms ---
+
+variable "ebs_write_ops_threshold" {
+  description = "EBS Write Ops threshold (IOPS)"
+  type        = number
+  default     = 3000
+}
+
+variable "ebs_write_bytes_threshold" {
+  description = "EBS Write Bytes threshold in bytes (default 100MB)"
+  type        = number
+  default     = 104857600
+}

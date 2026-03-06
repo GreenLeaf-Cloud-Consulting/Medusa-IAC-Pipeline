@@ -23,17 +23,23 @@ terraform {
 
 # ==================== FRANCE PRODUCTION ====================
 module "france_prod" {
-  source = "./modules/environments/france/prod"
+  source                 = "./modules/environments/france/prod"
+  discord_webhook        = var.discord_webhook
+  grafana_admin_password = var.grafana_admin_password
 }
 
 # ==================== GERMANY PRODUCTION ====================
 module "germany_prod" {
-  source = "./modules/environments/germany/prod"
+  source                 = "./modules/environments/germany/prod"
+  discord_webhook        = var.discord_webhook
+  grafana_admin_password = var.grafana_admin_password
 }
 
 # ==================== SWEDEN PRODUCTION ====================
 module "sweden_prod" {
-  source = "./modules/environments/sweden/prod"
+  source                 = "./modules/environments/sweden/prod"
+  discord_webhook        = var.discord_webhook
+  grafana_admin_password = var.grafana_admin_password
 }
 
 # ==================== SHARED S3 BUCKET ====================
@@ -187,6 +193,59 @@ output "france_cloudwatch_dashboard_url" {
 output "france_cloudwatch_sns_topic_arn" {
   description = "ARN du topic SNS pour les alertes France"
   value       = module.france_prod.cloudwatch_sns_topic_arn
+}
+
+# CloudWatch Germany
+output "germany_cloudwatch_dashboard_url" {
+  description = "URL du dashboard CloudWatch Germany"
+  value       = module.germany_prod.cloudwatch_dashboard_url
+}
+
+output "germany_cloudwatch_sns_topic_arn" {
+  description = "ARN du topic SNS pour les alertes Germany"
+  value       = module.germany_prod.cloudwatch_sns_topic_arn
+}
+
+# CloudWatch Sweden
+output "sweden_cloudwatch_dashboard_url" {
+  description = "URL du dashboard CloudWatch Sweden"
+  value       = module.sweden_prod.cloudwatch_dashboard_url
+}
+
+output "sweden_cloudwatch_sns_topic_arn" {
+  description = "ARN du topic SNS pour les alertes Sweden"
+  value       = module.sweden_prod.cloudwatch_sns_topic_arn
+}
+
+# Monitoring - Grafana & Prometheus
+output "france_grafana_url" {
+  description = "Grafana URL France"
+  value       = module.france_prod.grafana_url
+}
+
+output "france_prometheus_url" {
+  description = "Prometheus URL France"
+  value       = module.france_prod.prometheus_url
+}
+
+output "germany_grafana_url" {
+  description = "Grafana URL Germany"
+  value       = module.germany_prod.grafana_url
+}
+
+output "germany_prometheus_url" {
+  description = "Prometheus URL Germany"
+  value       = module.germany_prod.prometheus_url
+}
+
+output "sweden_grafana_url" {
+  description = "Grafana URL Sweden"
+  value       = module.sweden_prod.grafana_url
+}
+
+output "sweden_prometheus_url" {
+  description = "Prometheus URL Sweden"
+  value       = module.sweden_prod.prometheus_url
 }
 
 # ==========================================

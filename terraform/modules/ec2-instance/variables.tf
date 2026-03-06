@@ -42,20 +42,29 @@ variable "subnet_id" {
 variable "alb_target_group_arn" {
   description = "ARN of the ALB Target Group to register this instance with"
   type        = string
+  default     = ""
 }
 
 variable "alb_security_group_id" {
   description = "Security Group ID of the ALB (to allow traffic from ALB)"
   type        = string
+  default     = ""
 }
 
 variable "database_security_group_id" {
   description = "Security Group ID of the database instances (to allow DB access)"
   type        = string
+  default     = ""
 }
 
 variable "enable_public_ip" {
   description = "Allocate a public IP for the instance (disable if behind ALB)"
   type        = bool
   default     = true
+}
+
+variable "user_data" {
+  description = "User data script to run on instance launch"
+  type        = string
+  default     = null
 }

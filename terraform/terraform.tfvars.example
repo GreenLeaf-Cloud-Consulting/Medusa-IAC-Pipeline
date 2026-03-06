@@ -1,0 +1,2 @@
+discord_webhook        = "https://discord.com/api/webhooks/xxx/yyy"
+grafana_admin_password = "admin"
