@@ -46,5 +46,5 @@ output "node_role_arn" {
 
 output "kubeconfig_command" {
   description = "Command to configure kubectl for this cluster"
-  value       = "aws eks update-kubeconfig --region ${var.region_name == "france" ? "eu-west-2" : "eu-central-1"} --name ${aws_eks_cluster.main.name}"
+  value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.main.name}"
 }

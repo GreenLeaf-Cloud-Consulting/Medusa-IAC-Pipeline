@@ -6,7 +6,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "eu-west-2" # London
+  region = "eu-west-3" # Paris
 }
 
 locals {
@@ -16,19 +16,20 @@ locals {
   ami_debian_arm  = "ami-0acc7dd449f810b83" # (optionnel) Debian 12 ARM64 eu-west-2
 }
 
-# ✅ AMI Debian 12 ARM64 la plus récente (dans eu-west-2)
+# ✅ AMI Debian 12 x86_64 la plus récente (dans eu-west-2)
+# Changé de ARM64 → x86_64 pour éviter InsufficientInstanceCapacity sur t4g
 data "aws_ami" "debian12_arm64" {
   most_recent = true
   owners      = ["136693071363"] # Debian officiel sur AWS
 
   filter {
     name   = "name"
-    values = ["debian-12-arm64-*"]
+    values = ["debian-12-amd64-*"]
   }
 
   filter {
     name   = "architecture"
-    values = ["arm64"]
+    values = ["x86_64"]
   }
 
   filter {
@@ -46,8 +47,8 @@ module "vpc" {
   vpc_cidr     = "10.0.0.0/16"
 
   availability_zones = [
-    "eu-west-2a",
-    "eu-west-2b"
+    "eu-west-3a",
+    "eu-west-3b"
   ]
 
   public_subnet_cidrs = [
@@ -92,7 +93,7 @@ module "database_primary" {
   ami               = data.aws_ami.debian12_arm64.id
 
   is_primary        = true
-  instance_type     = "t4g.small"
+  instance_type     = "t3.small"
   replica_count     = 0
 
   ebs_volume_size   = 30
@@ -125,7 +126,7 @@ module "database_replica_france" {
   ami               = data.aws_ami.debian12_arm64.id
 
   is_primary            = false
-  replica_instance_type = "t4g.small"
+  replica_instance_type = "t3.small"
   replica_count         = 1
 
   replica_ebs_volume_size = 30
@@ -152,10 +153,10 @@ module "app_instance_1" {
   source = "../../../ec2-instance"
 
   environment   = local.environment
-  region        = "eu-west-2"
+  region        = "eu-west-3"
   instance_name = "app-1"
   ami           = data.aws_ami.debian12_arm64.id
-  instance_type = "t4g.small"
+  instance_type = "t3.small"
 
   vpc_id                      = module.vpc.vpc_id
   subnet_id                   = module.vpc.public_subnet_ids[0]
@@ -173,10 +174,10 @@ module "app_instance_2" {
   source = "../../../ec2-instance"
 
   environment   = local.environment
-  region        = "eu-west-2"
+  region        = "eu-west-3"
   instance_name = "app-2"
   ami           = data.aws_ami.debian12_arm64.id
-  instance_type = "t4g.small"
+  instance_type = "t3.small"
 
   vpc_id                      = module.vpc.vpc_id
   subnet_id                   = module.vpc.public_subnet_ids[1]
@@ -189,12 +190,21 @@ module "app_instance_2" {
   ssh_user      = "admin"
 }
 
+# ==================== ECR ====================
+module "ecr" {
+  source = "../../../ecr"
+
+  personal_prefix = "jugurta-dev"
+  environment     = local.environment
+}
+
 # ==================== EKS ====================
 module "eks" {
   source = "../../../eks"
 
   environment  = local.environment
   region_name  = local.region_name
+  aws_region   = "eu-west-3"
   vpc_id       = module.vpc.vpc_id
   subnet_ids   = module.vpc.public_subnet_ids
 }
@@ -205,7 +215,7 @@ module "cloudwatch" {
 
   environment  = local.environment
   region_name  = local.region_name
-  aws_region   = "eu-west-2"
+  aws_region   = "eu-west-3"
   alert_email  = "equipe@greenleaf.com"
 
   instance_ids = [

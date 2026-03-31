@@ -163,6 +163,7 @@ module "eks" {
 
   environment  = local.environment
   region_name  = local.region_name
+  aws_region   = "eu-central-1"
   vpc_id       = module.vpc.vpc_id
   subnet_ids   = module.vpc.public_subnet_ids
 }

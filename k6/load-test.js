@@ -27,11 +27,11 @@ export const options = {
 // ==========================================
 // URLS CIBLES
 // ==========================================
-const BASE_URL_FRANCE  = 'http://prod-france-alb-rayane-731669497.eu-west-2.elb.amazonaws.com';
-const BASE_URL_GERMANY = 'http://prod-germany-alb-rayane-1694306237.eu-central-1.elb.amazonaws.com';
+const BASE_URL_BACKEND    = 'http://a45cf19a0da1e48beb4806a2ecafe3fd-2092413929.eu-west-3.elb.amazonaws.com';
+const BASE_URL_STOREFRONT = 'http://ac082bb35829d46eb984a2f09033310f-1887772991.eu-west-3.elb.amazonaws.com';
 
-// On teste la France par défaut
-const BASE_URL = BASE_URL_FRANCE;
+// On teste le backend par défaut
+const BASE_URL = BASE_URL_BACKEND;
 
 // ==========================================
 // SCÉNARIO DE TEST
@@ -66,7 +66,7 @@ export default function () {
 export function handleSummary(data) {
   return {
     'stdout': textSummary(data, { indent: ' ', enableColors: true }),
-    'results/summary.json': JSON.stringify(data, null, 2),
+    'k6/results/summary.json': JSON.stringify(data, null, 2),
   };
 }
 

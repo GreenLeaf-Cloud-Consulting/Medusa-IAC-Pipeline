@@ -1,0 +1,64 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: medusa-seed
+  namespace: medusa
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed
+          image: alpine:3.18
+          command:
+            - /bin/sh
+            - -c
+            - |
+              apk add --no-cache curl jq
+
+              BACKEND="http://medusa-backend"
+
+              echo "=== Attente du backend ==="
+              until curl -sf "$BACKEND/health" > /dev/null; do
+                echo "Backend pas prêt, attente..."
+                sleep 5
+              done
+              echo "Backend prêt."
+
+              echo "=== Authentification ==="
+              TOKEN=$(curl -sf -X POST "$BACKEND/auth/user/emailpass" \
+                -H "Content-Type: application/json" \
+                -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" \
+                | jq -r '.token')
+
+              if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+                echo "Erreur: impossible de récupérer le token"
+                exit 1
+              fi
+              echo "Token OK"
+
+              echo "=== Vérification des régions ==="
+              REGIONS=$(curl -sf "$BACKEND/admin/regions" \
+                -H "Authorization: Bearer $TOKEN" | jq '.count')
+
+              if [ "$REGIONS" -gt 0 ] 2>/dev/null; then
+                echo "Régions déjà configurées ($REGIONS), rien à faire."
+                exit 0
+              fi
+
+              echo "=== Création de la région Europe ==="
+              curl -sf -X POST "$BACKEND/admin/regions" \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d '{"name":"Europe","currency_code":"eur","countries":["fr","de","se"]}' | jq .
+
+              echo "=== Seed terminé ==="
+          env:
+            - name: ADMIN_EMAIL
+              value: "admin@test.com"
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: medusa-secrets
+                  key: ADMIN_PASSWORD

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medusa-config
+  namespace: medusa
+data:
+  DATABASE_HOST: "postgres"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "medusa"
+  DATABASE_USER: "medusa"
+
+  # Backend URL
+  MEDUSA_BACKEND_URL: "http://a45cf19a0da1e48beb4806a2ecafe3fd-2092413929.eu-west-3.elb.amazonaws.com"
+
+  # CORS - required for Medusa v2 admin panel
+  ADMIN_CORS: "http://a45cf19a0da1e48beb4806a2ecafe3fd-2092413929.eu-west-3.elb.amazonaws.com"
+  STORE_CORS: "http://a45cf19a0da1e48beb4806a2ecafe3fd-2092413929.eu-west-3.elb.amazonaws.com"
+  AUTH_CORS: "http://a45cf19a0da1e48beb4806a2ecafe3fd-2092413929.eu-west-3.elb.amazonaws.com"
+
+  # S3 Storage
+  S3_BUCKET: "jugurta-prod-medusa-assets-global"
+  S3_REGION: "eu-west-1"
+
+  # Node
+  NODE_ENV: "development"
+  PORT: "9000"

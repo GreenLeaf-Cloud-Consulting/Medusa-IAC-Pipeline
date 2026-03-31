@@ -18,6 +18,11 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
+variable "aws_region" {
+  description = "AWS region (ex: eu-west-2, eu-central-1, eu-north-1)"
+  type        = string
+}
+
 variable "kubernetes_version" {
   description = "Kubernetes version for the EKS cluster"
   type        = string
@@ -39,13 +44,13 @@ variable "node_min_size" {
 variable "node_max_size" {
   description = "Maximum number of worker nodes"
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "node_desired_size" {
   description = "Desired number of worker nodes"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "node_disk_size" {

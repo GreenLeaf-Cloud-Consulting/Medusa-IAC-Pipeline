@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medusa-backend
+  namespace: medusa
+  labels:
+    app: medusa-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: medusa-backend
+  template:
+    metadata:
+      labels:
+        app: medusa-backend
+    spec:
+      initContainers:
+        - name: medusa-migrate
+          image: 622333992348.dkr.ecr.eu-west-3.amazonaws.com/jugurta-dev-prod-medusa-backend:latest
+          command: ["npx", "medusa", "db:migrate"]
+          env:
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: medusa-secrets
+                  key: DATABASE_PASSWORD
+            - name: DATABASE_URL
+              value: "postgres://medusa:$(DATABASE_PASSWORD)@postgres:5432/medusa?sslmode=disable"
+      containers:
+        - name: medusa-backend
+          image: 622333992348.dkr.ecr.eu-west-3.amazonaws.com/jugurta-dev-prod-medusa-backend:latest
+          ports:
+            - containerPort: 9000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "9000"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: medusa-secrets
+                  key: DATABASE_PASSWORD
+            - name: DATABASE_URL
+              value: "postgres://medusa:$(DATABASE_PASSWORD)@postgres:5432/medusa?sslmode=disable"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: medusa-secrets
+                  key: JWT_SECRET
+            - name: COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: medusa-secrets
+                  key: COOKIE_SECRET
+            - name: S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: medusa-config
+                  key: S3_BUCKET
+            - name: S3_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: medusa-config
+                  key: S3_REGION
+            - name: ADMIN_CORS
+              valueFrom:
+                configMapKeyRef:
+                  name: medusa-config
+                  key: ADMIN_CORS
+            - name: STORE_CORS
+              valueFrom:
+                configMapKeyRef:
+                  name: medusa-config
+                  key: STORE_CORS
+            - name: AUTH_CORS
+              valueFrom:
+                configMapKeyRef:
+                  name: medusa-config
+                  key: AUTH_CORS
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10

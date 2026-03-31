@@ -1,6 +1,11 @@
 # ==========================================
 # MAIN TERRAFORM CONFIGURATION - V2
-# Architecture complète multi-région avec ALB
+# Architecture complète multi-région avec ALB + EKS
+# ==========================================
+#
+# MODE TEST (France uniquement)
+# Pour déployer les 3 régions, décommenter germany_prod, sweden_prod
+# et leurs outputs/variables associés
 # ==========================================
 
 terraform {
@@ -27,21 +32,21 @@ module "france_prod" {
 }
 
 # ==================== GERMANY PRODUCTION ====================
-module "germany_prod" {
-  source = "./modules/environments/germany/prod"
-}
+# Décommenter pour déployer Germany
+# module "germany_prod" {
+#   source = "./modules/environments/germany/prod"
+# }
 
 # ==================== SWEDEN PRODUCTION ====================
-module "sweden_prod" {
-  source = "./modules/environments/sweden/prod"
-}
+# Décommenter pour déployer Sweden
+# module "sweden_prod" {
+#   source = "./modules/environments/sweden/prod"
+# }
 
 # ==================== SHARED S3 BUCKET ====================
-# Bucket S3 global partagé entre France, Germany et Sweden pour les assets Medusa
 module "s3_global" {
   source = "./modules/s3"
 
-  # On utilise eu-west-1 (Irlande) comme région neutre
   providers = {
     aws = aws.ireland
   }
@@ -53,23 +58,23 @@ module "s3_global" {
   enable_versioning = true
   cors_allowed_origins = [
     "http://${module.france_prod.alb_url}",
-    "http://${module.germany_prod.alb_url}",
-    "http://${module.sweden_prod.alb_url}",
+    # "http://${module.germany_prod.alb_url}",   # décommenter avec germany_prod
+    # "http://${module.sweden_prod.alb_url}",    # décommenter avec sweden_prod
     "http://localhost:9000",
+    "http://localhost:8000",
     "http://localhost:7001"
   ]
 
   create_iam_role = true
 }
 
-# Provider pour le bucket S3 (région neutre)
 provider "aws" {
   alias  = "ireland"
   region = "eu-west-1"
 }
 
 # ==========================================
-# OUTPUTS - Informations de connexion
+# OUTPUTS
 # ==========================================
 
 # France
@@ -88,21 +93,62 @@ output "france_database" {
   value       = module.france_prod.database_info
 }
 
-# Germany
-output "germany_alb_url" {
-  description = "URL de l'ALB Germany"
-  value       = module.germany_prod.alb_url
+output "france_ecr_backend_url" {
+  description = "URL ECR backend France"
+  value       = module.france_prod.ecr_backend_url
 }
 
-output "germany_app_instances" {
-  description = "Instances App Germany"
-  value       = module.germany_prod.app_instances_info
+output "france_ecr_storefront_url" {
+  description = "URL ECR storefront France"
+  value       = module.france_prod.ecr_storefront_url
 }
 
-output "germany_database" {
-  description = "Instances Database Germany"
-  value       = module.germany_prod.database_info
+output "france_eks_cluster_name" {
+  description = "Nom du cluster EKS France"
+  value       = module.france_prod.eks_cluster_name
 }
+
+output "france_eks_cluster_endpoint" {
+  description = "Endpoint du cluster EKS France"
+  value       = module.france_prod.eks_cluster_endpoint
+}
+
+output "france_eks_kubeconfig_command" {
+  description = "Commande kubectl pour le cluster EKS France"
+  value       = module.france_prod.eks_kubeconfig_command
+}
+
+output "france_cloudwatch_dashboard_url" {
+  description = "URL du dashboard CloudWatch France"
+  value       = module.france_prod.cloudwatch_dashboard_url
+}
+
+output "france_cloudwatch_sns_topic_arn" {
+  description = "ARN du topic SNS pour les alertes France"
+  value       = module.france_prod.cloudwatch_sns_topic_arn
+}
+
+# Germany outputs (décommenter avec germany_prod)
+# output "germany_alb_url" {
+#   value = module.germany_prod.alb_url
+# }
+# output "germany_eks_cluster_name" {
+#   value = module.germany_prod.eks_cluster_name
+# }
+# output "germany_eks_kubeconfig_command" {
+#   value = module.germany_prod.eks_kubeconfig_command
+# }
+
+# Sweden outputs (décommenter avec sweden_prod)
+# output "sweden_alb_url" {
+#   value = module.sweden_prod.alb_url
+# }
+# output "sweden_eks_cluster_name" {
+#   value = module.sweden_prod.eks_cluster_name
+# }
+# output "sweden_eks_kubeconfig_command" {
+#   value = module.sweden_prod.eks_kubeconfig_command
+# }
 
 # S3 Global
 output "s3_bucket_name" {
@@ -120,147 +166,30 @@ output "s3_iam_policy_arn" {
   value       = module.s3_global.iam_policy_arn
 }
 
-# EKS France
-output "france_eks_cluster_name" {
-  description = "Nom du cluster EKS France"
-  value       = module.france_prod.eks_cluster_name
-}
-
-output "france_eks_cluster_endpoint" {
-  description = "Endpoint du cluster EKS France"
-  value       = module.france_prod.eks_cluster_endpoint
-}
-
-output "france_eks_kubeconfig_command" {
-  description = "Commande kubectl pour le cluster EKS France"
-  value       = module.france_prod.eks_kubeconfig_command
-}
-
-# EKS Germany
-output "germany_eks_cluster_name" {
-  description = "Nom du cluster EKS Germany"
-  value       = module.germany_prod.eks_cluster_name
-}
-
-output "germany_eks_cluster_endpoint" {
-  description = "Endpoint du cluster EKS Germany"
-  value       = module.germany_prod.eks_cluster_endpoint
-}
-
-output "germany_eks_kubeconfig_command" {
-  description = "Commande kubectl pour le cluster EKS Germany"
-  value       = module.germany_prod.eks_kubeconfig_command
-}
-
-# Sweden
-output "sweden_alb_url" {
-  description = "URL de l'ALB Sweden"
-  value       = module.sweden_prod.alb_url
-}
-
-output "sweden_app_instances" {
-  description = "Instances App Sweden"
-  value       = module.sweden_prod.app_instances_info
-}
-
-output "sweden_database" {
-  description = "Instances Database Sweden"
-  value       = module.sweden_prod.database_info
-}
-
-output "sweden_eks_cluster_name" {
-  description = "Nom du cluster EKS Sweden"
-  value       = module.sweden_prod.eks_cluster_name
-}
-
-output "sweden_eks_kubeconfig_command" {
-  description = "Commande kubectl pour le cluster EKS Sweden"
-  value       = module.sweden_prod.eks_kubeconfig_command
-}
-
-# CloudWatch France
-output "france_cloudwatch_dashboard_url" {
-  description = "URL du dashboard CloudWatch France"
-  value       = module.france_prod.cloudwatch_dashboard_url
-}
-
-output "france_cloudwatch_sns_topic_arn" {
-  description = "ARN du topic SNS pour les alertes France"
-  value       = module.france_prod.cloudwatch_sns_topic_arn
-}
-
-# ==========================================
-# ANSIBLE INVENTORY GENERATION
-# ==========================================
-
-resource "local_file" "ansible_inventory" {
-  content = templatefile("${path.module}/ansible-inventory.tpl", {
-    # France App Instances
-    france_app_1_public_ip  = module.france_prod.app_instance_1_public_ip
-    france_app_1_private_ip = module.france_prod.app_instance_1_private_ip
-    france_app_2_public_ip  = module.france_prod.app_instance_2_public_ip
-    france_app_2_private_ip = module.france_prod.app_instance_2_private_ip
-
-    # France Database
-    france_db_primary_public_ip  = module.france_prod.database_primary_public_ip
-    france_db_primary_private_ip = module.france_prod.database_primary_private_ip
-    france_db_replica_private_ips = module.france_prod.database_replica_france_private_ips
-    france_db_replica_public_ips = module.france_prod.database_replica_france_public_ips
-
-    # Germany App Instances
-    germany_app_1_public_ip  = module.germany_prod.app_instance_1_public_ip
-    germany_app_1_private_ip = module.germany_prod.app_instance_1_private_ip
-    germany_app_2_public_ip  = module.germany_prod.app_instance_2_public_ip
-    germany_app_2_private_ip = module.germany_prod.app_instance_2_private_ip
-
-    # Germany Database
-    germany_db_replica_private_ips = module.germany_prod.database_replica_germany_private_ips
-    germany_db_replica_public_ips = module.germany_prod.database_replica_germany_public_ips
-
-    # Configuration
-    ssh_user  = "admin"
-    keys_path = "../keys"
-
-    # AWS Regions
-    france_aws_region  = "eu-west-2"
-    germany_aws_region = "eu-central-1"
-  })
-
-  filename        = "${path.module}/ansible/inventory/hosts.yml"
-  file_permission = "0644"
-}
-
-# ==========================================
-# SAVE SSH KEYS
-# ==========================================
-# NOTE: Les clés SSH sont maintenant créées directement par les modules
-# ec2-instance et database dans le répertoire keys/
-
 output "deployment_complete" {
   value = <<-EOT
     ==========================================
-    🚀 DÉPLOIEMENT TERRAFORM TERMINÉ !
+    DEPLOIEMENT TERRAFORM TERMINE !
     ==========================================
 
-    📍 FRANCE (eu-west-2 - London):
-       ALB: ${module.france_prod.alb_url}
-       App 1: ${module.france_prod.app_instance_1_public_ip}
-       App 2: ${module.france_prod.app_instance_2_public_ip}
+    FRANCE (eu-west-2):
+       ALB:        ${module.france_prod.alb_url}
+       App 1:      ${module.france_prod.app_instance_1_public_ip}
+       App 2:      ${module.france_prod.app_instance_2_public_ip}
        DB Primary: ${module.france_prod.database_primary_public_ip}
+       EKS:        ${module.france_prod.eks_cluster_name}
 
-    📍 GERMANY (eu-central-1):
-       ALB: ${module.germany_prod.alb_url}
-       App 1: ${module.germany_prod.app_instance_1_public_ip}
-       App 2: ${module.germany_prod.app_instance_2_public_ip}
-
-    🪣 S3 STORAGE (Partagé entre France et Germany):
+    S3 STORAGE:
        Bucket: ${module.s3_global.bucket_name}
        Region: eu-west-1 (Ireland)
 
-    📝 Prochaine étape:
-       cd ansible && ansible-playbook -i inventory/hosts.yml site.yml
+    PROCHAINES ETAPES (EKS) :
+       aws eks update-kubeconfig --region eu-west-3 --name ${module.france_prod.eks_cluster_name}
+       kubectl apply -f ../k8s/
 
-    🔑 Clés SSH sauvegardées dans: terraform/keys/
+    ACCES :
+       Backend:    via kubectl get svc -n medusa (port 9000)
+       Storefront: via kubectl get svc -n medusa (port 8000)
     ==========================================
   EOT
 }

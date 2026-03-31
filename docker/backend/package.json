@@ -1,0 +1,18 @@
+{
+  "name": "medusa-store",
+  "version": "2.0.0",
+  "scripts": {
+    "build": "medusa build",
+    "start": "medusa start",
+    "dev": "medusa develop"
+  },
+  "dependencies": {
+    "@medusajs/medusa": "^2.3.0",
+    "@medusajs/dashboard": "^2.3.0",
+    "@medusajs/types": "^2.3.0",
+    "@medusajs/utils": "^2.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
