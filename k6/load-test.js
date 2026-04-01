@@ -27,8 +27,9 @@ export const options = {
 // ==========================================
 // URLS CIBLES
 // ==========================================
-const BASE_URL_BACKEND    = 'http://a45cf19a0da1e48beb4806a2ecafe3fd-2092413929.eu-west-3.elb.amazonaws.com';
-const BASE_URL_STOREFRONT = 'http://ac082bb35829d46eb984a2f09033310f-1887772991.eu-west-3.elb.amazonaws.com';
+const BASE_URL_BACKEND    = 'http://a8f909db5484b46ad8c7056c3ae00d6b-1014007585.eu-west-3.elb.amazonaws.com';
+const BASE_URL_STOREFRONT = 'http://ac79d64780c8f428582ab270da8b13af-1880559677.eu-west-3.elb.amazonaws.com';
+const PUBLISHABLE_KEY     = 'pk_74022c0fa1718d207c7aa3b42fca8a177094ec76b7619be5f047ceb0b81566da';
 
 // On teste le backend par défaut
 const BASE_URL = BASE_URL_BACKEND;
@@ -48,14 +49,16 @@ export default function () {
 
   sleep(0.5);
 
-  // --- Test 2 : Page principale ---
-  const homeRes = http.get(`${BASE_URL}/`);
-  check(homeRes, {
-    'home status 200 ou 404': (r) => r.status === 200 || r.status === 404,
-    'home répond < 2s': (r) => r.timings.duration < 2000,
+  // --- Test 2 : Liste des produits (requête DB via PgBouncer) ---
+  const productsRes = http.get(`${BASE_URL}/store/products`, {
+    headers: { 'x-publishable-api-key': PUBLISHABLE_KEY },
   });
-  errorRate.add(homeRes.status >= 500);
-  responseTime.add(homeRes.timings.duration);
+  check(productsRes, {
+    'products status 200': (r) => r.status === 200,
+    'products répond < 2s': (r) => r.timings.duration < 2000,
+  });
+  errorRate.add(productsRes.status !== 200);
+  responseTime.add(productsRes.timings.duration);
 
   sleep(1);
 }

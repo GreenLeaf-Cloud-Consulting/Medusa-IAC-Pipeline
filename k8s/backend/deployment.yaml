@@ -43,7 +43,7 @@ spec:
                   name: medusa-secrets
                   key: DATABASE_PASSWORD
             - name: DATABASE_URL
-              value: "postgres://medusa:$(DATABASE_PASSWORD)@postgres:5432/medusa?sslmode=disable"
+              value: "postgres://medusa:$(DATABASE_PASSWORD)@pgbouncer:5432/medusa?sslmode=disable"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -92,9 +92,13 @@ spec:
               port: 9000
             initialDelaySeconds: 60
             periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
           readinessProbe:
             httpGet:
               path: /health
               port: 9000
             initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3

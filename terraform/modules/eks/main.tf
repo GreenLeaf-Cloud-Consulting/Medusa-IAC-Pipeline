@@ -143,6 +143,35 @@ resource "aws_iam_role_policy_attachment" "node_ssm_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# ==================== IAM - CLUSTER AUTOSCALER ====================
+
+resource "aws_iam_role_policy" "cluster_autoscaler" {
+  name = "${var.environment}-${var.region_name}-cluster-autoscaler"
+  role = aws_iam_role.node_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "autoscaling:DescribeAutoScalingGroups",
+          "autoscaling:DescribeAutoScalingInstances",
+          "autoscaling:DescribeLaunchConfigurations",
+          "autoscaling:DescribeScalingActivities",
+          "autoscaling:DescribeTags",
+          "autoscaling:SetDesiredCapacity",
+          "autoscaling:TerminateInstanceInAutoScalingGroup",
+          "ec2:DescribeLaunchTemplateVersions",
+          "ec2:DescribeInstanceTypes",
+          "eks:DescribeNodegroup"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # ==================== SUBNET TAGS FOR EKS ====================
 
 resource "aws_ec2_tag" "subnet_cluster_tag" {
@@ -246,6 +275,8 @@ resource "aws_eks_node_group" "main" {
     CostCenter  = "ecommerce"
     Region      = var.region_name
     ManagedBy   = "Terraform"
+    "k8s.io/cluster-autoscaler/enabled"                      = "true"
+    "k8s.io/cluster-autoscaler/${aws_eks_cluster.main.name}" = "owned"
   }
 
   depends_on = [
