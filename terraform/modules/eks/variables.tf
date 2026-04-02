@@ -58,3 +58,15 @@ variable "node_disk_size" {
   type        = number
   default     = 20
 }
+
+variable "enable_spot_nodes" {
+  description = "Activer un node group Spot pour réduire les coûts (~70% moins cher)"
+  type        = bool
+  default     = false
+}
+
+variable "spot_node_max_size" {
+  description = "Nombre max de nodes Spot (pour les pics de charge)"
+  type        = number
+  default     = 4
+}

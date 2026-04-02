@@ -1,0 +1,269 @@
+# ==========================================
+# RBAC - Role Based Access Control
+# Principle of least privilege pour Online Boutique
+# ==========================================
+
+# ==================== NAMESPACE BOUTIQUE ====================
+
+# Role : lecture seule des pods et services (pour les health checks)
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: boutique-readonly
+  namespace: boutique
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: boutique-readonly-binding
+  namespace: boutique
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: boutique-readonly
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: boutique
+
+# ==================== NETWORK POLICIES ====================
+# Isolation réseau : chaque service ne parle qu'à ses dépendances
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-default
+  namespace: boutique
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Frontend : accepte trafic externe + appelle les microservices
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-policy
+  namespace: boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - {}  # Accepte tout (vient de l'ELB)
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: productcatalogservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: currencyservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: cartservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: recommendationservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: shippingservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: checkoutservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: adservice
+  # Jaeger tracing (namespace tracing)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: tracing
+    ports:
+    - port: 4317
+      protocol: TCP
+  - ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+
+---
+# Cartservice : accepte frontend + checkout, parle à redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cartservice-policy
+  namespace: boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: cartservice
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+  - from:
+    - podSelector:
+        matchLabels:
+          app: checkoutservice
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis-cart
+  - ports:
+    - port: 53
+      protocol: UDP
+
+---
+# Redis : accepte uniquement cartservice
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-policy
+  namespace: boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: redis-cart
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: cartservice
+
+---
+# Checkoutservice : accepte frontend, appelle payment/shipping/email/cart/currency/catalog
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: checkoutservice-policy
+  namespace: boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: checkoutservice
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: cartservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: paymentservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: emailservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: shippingservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: currencyservice
+  - to:
+    - podSelector:
+        matchLabels:
+          app: productcatalogservice
+  - ports:
+    - port: 53
+      protocol: UDP
+
+---
+# Services sans egress particulier : acceptent uniquement frontend ou checkout
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: productcatalog-policy
+  namespace: boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: productcatalogservice
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+  - from:
+    - podSelector:
+        matchLabels:
+          app: checkoutservice
+  - from:
+    - podSelector:
+        matchLabels:
+          app: recommendationservice
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: paymentservice-policy
+  namespace: boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: paymentservice
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: checkoutservice
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: emailservice-policy
+  namespace: boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: emailservice
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: checkoutservice

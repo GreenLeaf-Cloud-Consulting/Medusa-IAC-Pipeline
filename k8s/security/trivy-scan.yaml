@@ -1,0 +1,35 @@
+# ==========================================
+# TRIVY - Scan de vulnérabilités des images
+# Tourne comme un Job Kubernetes
+# ==========================================
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: trivy-scan
+  namespace: boutique
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: trivy
+        image: aquasec/trivy:0.49.1
+        args:
+        - image
+        - --exit-code
+        - "0"
+        - --severity
+        - "HIGH,CRITICAL"
+        - --format
+        - "table"
+        - --no-progress
+        - "us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.5"
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi

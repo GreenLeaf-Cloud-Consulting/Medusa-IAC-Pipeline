@@ -1,0 +1,91 @@
+# ==========================================
+# CHAOS ENGINEERING - Expériences Chaos Mesh
+# Tester la résilience d'Online Boutique
+# ==========================================
+# Appliquer une expérience :
+#   kubectl apply -f experiments.yaml
+# Stopper :
+#   kubectl delete -f experiments.yaml
+# ==========================================
+
+# ==================== EXPÉRIENCE 1 ====================
+# Pod Failure : tue un pod cartservice aléatoirement
+# Attendu : le site reste accessible, cartservice redémarre
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: cartservice-pod-failure
+  namespace: boutique
+spec:
+  action: pod-failure
+  mode: one
+  duration: "30s"
+  selector:
+    namespaces:
+      - boutique
+    labelSelectors:
+      app: cartservice
+
+---
+# ==================== EXPÉRIENCE 2 ====================
+# Pod Failure : tue un pod recommendationservice
+# Attendu : la homepage reste accessible (degraded mode)
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: recommendation-pod-failure
+  namespace: boutique
+spec:
+  action: pod-failure
+  mode: one
+  duration: "30s"
+  selector:
+    namespaces:
+      - boutique
+    labelSelectors:
+      app: recommendationservice
+
+---
+# ==================== EXPÉRIENCE 3 ====================
+# Network Latency : ajoute 200ms de latence sur productcatalog
+# Attendu : p95 augmente mais pas d'erreurs
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: productcatalog-latency
+  namespace: boutique
+spec:
+  action: delay
+  mode: one
+  selector:
+    namespaces:
+      - boutique
+    labelSelectors:
+      app: productcatalogservice
+  delay:
+    latency: "200ms"
+    jitter: "50ms"
+  duration: "60s"
+
+---
+# ==================== EXPÉRIENCE 4 ====================
+# CPU Stress : surcharge CPU sur le frontend
+# Attendu : HPA scale up les replicas frontend
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: frontend-cpu-stress
+  namespace: boutique
+spec:
+  mode: one
+  selector:
+    namespaces:
+      - boutique
+    labelSelectors:
+      app: frontend
+  stressors:
+    cpu:
+      workers: 2
+      load: 80
+  duration: "60s"

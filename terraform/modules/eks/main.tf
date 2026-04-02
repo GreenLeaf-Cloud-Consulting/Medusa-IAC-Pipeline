@@ -288,6 +288,62 @@ resource "aws_eks_node_group" "main" {
   ]
 }
 
+# ==================== NODE GROUP SPOT ====================
+# Node group Spot : ~70% moins cher que On-Demand
+# Utilisé pour les pics de charge (Black Friday)
+# Les nodes On-Demand restent pour les services critiques
+
+resource "aws_eks_node_group" "spot" {
+  count = var.enable_spot_nodes ? 1 : 0
+
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "${var.environment}-${var.region_name}-eks-ng-spot-rayane"
+  node_role_arn   = aws_iam_role.node_role.arn
+  subnet_ids      = var.subnet_ids
+
+  # Plusieurs types d'instances pour maximiser la disponibilité Spot
+  instance_types = ["t3.large", "t3a.large", "t2.large"]
+  capacity_type  = "SPOT"
+
+  scaling_config {
+    desired_size = 0
+    min_size     = 0
+    max_size     = var.spot_node_max_size
+  }
+
+  update_config {
+    max_unavailable = 1
+  }
+
+  # Label pour identifier les nodes Spot
+  labels = {
+    "node-type" = "spot"
+  }
+
+  # Taint pour que seuls les pods tolerants soient schedulés sur Spot
+  taint {
+    key    = "spot"
+    value  = "true"
+    effect = "NO_SCHEDULE"
+  }
+
+  tags = {
+    Name        = "${var.environment}-${var.region_name}-eks-ng-spot-rayane"
+    Environment = var.environment
+    NodeType    = "spot"
+    ManagedBy   = "Terraform"
+    "k8s.io/cluster-autoscaler/enabled"                      = "true"
+    "k8s.io/cluster-autoscaler/${aws_eks_cluster.main.name}" = "owned"
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.node_worker_policy,
+    aws_iam_role_policy_attachment.node_cni_policy,
+    aws_iam_role_policy_attachment.node_ecr_policy,
+    aws_iam_role_policy_attachment.node_ssm_policy,
+  ]
+}
+
 # ==================== LAUNCH TEMPLATE ====================
 
 resource "aws_launch_template" "node" {

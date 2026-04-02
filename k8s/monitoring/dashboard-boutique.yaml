@@ -1,0 +1,135 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-boutique
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  boutique.json: |
+    {
+      "title": "Online Boutique - Black Friday",
+      "uid": "online-boutique",
+      "timezone": "Europe/Paris",
+      "schemaVersion": 38,
+      "refresh": "10s",
+      "panels": [
+        {
+          "id": 1,
+          "title": "Requêtes HTTP / seconde",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+          "targets": [{
+            "expr": "sum(rate(http_requests_total{namespace=\"boutique\"}[1m]))",
+            "legendFormat": "req/s"
+          }]
+        },
+        {
+          "id": 2,
+          "title": "Taux d'erreur HTTP (%)",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+          "targets": [{
+            "expr": "sum(rate(http_requests_total{namespace=\"boutique\",status=~\"5..\"}[1m])) / sum(rate(http_requests_total{namespace=\"boutique\"}[1m])) * 100",
+            "legendFormat": "erreurs %"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.5 },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 3,
+          "title": "Pods par service",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+          "targets": [{
+            "expr": "count(kube_pod_status_ready{namespace=\"boutique\",condition=\"true\"})",
+            "legendFormat": "pods ready"
+          }]
+        },
+        {
+          "id": 4,
+          "title": "Nodes EKS actifs",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+          "targets": [{
+            "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
+            "legendFormat": "nodes"
+          }]
+        },
+        {
+          "id": 5,
+          "title": "CPU par pod (namespace boutique)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "targets": [{
+            "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"boutique\",container!=\"\"}[1m])) by (pod)",
+            "legendFormat": "{{ pod }}"
+          }]
+        },
+        {
+          "id": 6,
+          "title": "Mémoire par pod (namespace boutique)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "targets": [{
+            "expr": "sum(container_memory_working_set_bytes{namespace=\"boutique\",container!=\"\"}) by (pod)",
+            "legendFormat": "{{ pod }}",
+            "legendFormat": "{{ pod }}"
+          }],
+          "fieldConfig": {
+            "defaults": { "unit": "bytes" }
+          }
+        },
+        {
+          "id": 7,
+          "title": "CPU nodes EKS (%)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "targets": [{
+            "expr": "100 - (avg by(node) (rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100)",
+            "legendFormat": "{{ node }}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "thresholds": {
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 70 },
+                  { "color": "red", "value": 90 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 8,
+          "title": "Replicas HPA par service",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "targets": [{
+            "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"boutique\"}",
+            "legendFormat": "{{ horizontalpodautoscaler }}"
+          }]
+        },
+        {
+          "id": 9,
+          "title": "Restarts de pods",
+          "type": "timeseries",
+          "gridPos": { "h": 6, "w": 24, "x": 0, "y": 20 },
+          "targets": [{
+            "expr": "increase(kube_pod_container_status_restarts_total{namespace=\"boutique\"}[5m])",
+            "legendFormat": "{{ pod }} / {{ container }}"
+          }]
+        }
+      ]
+    }

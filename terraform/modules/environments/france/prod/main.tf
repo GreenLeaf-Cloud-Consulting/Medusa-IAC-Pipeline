@@ -54,4 +54,28 @@ module "eks" {
   node_min_size      = 1
   node_desired_size  = 2
   node_max_size      = 6
+
+  # Spot Instances : node group séparé pour les pics (~70% moins cher)
+  enable_spot_nodes  = true
+  spot_node_max_size = 4
+}
+
+# ==================== BUDGET ALERTS ====================
+module "budget" {
+  source = "../../../budget"
+
+  team_name          = "rayane"
+  monthly_budget_usd = 600
+  alert_email        = "jugurta1999@gmail.com"
+}
+
+# ==================== WAF ====================
+module "waf" {
+  source = "../../../waf"
+
+  environment = local.environment
+  region_name = local.region_name
+  # elb_arn laissé vide : K8s crée un Classic ELB, incompatible avec WAFv2
+  # Pour associer : récupérer l'ARN de l'ALB si on passe à service type: LoadBalancer + annotations ALB
+  elb_arn = ""
 }

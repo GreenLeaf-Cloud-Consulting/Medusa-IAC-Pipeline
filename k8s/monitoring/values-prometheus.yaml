@@ -1,0 +1,201 @@
+# kube-prometheus-stack values
+# Prometheus + Grafana + AlertManager + node-exporter + kube-state-metrics
+
+# ==================== GRAFANA ====================
+grafana:
+  enabled: true
+  adminPassword: "BlackFriday2024!"
+
+  service:
+    type: LoadBalancer
+    port: 80
+
+  defaultDashboardsEnabled: true
+  defaultDashboardsTimezone: Europe/Paris
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Dashboard Online Boutique intégré directement dans Helm
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: online-boutique
+          orgId: 1
+          folder: "Online Boutique"
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/online-boutique
+
+  dashboards:
+    online-boutique:
+      boutique:
+        json: |
+          {
+            "title": "Online Boutique - Black Friday",
+            "uid": "online-boutique",
+            "timezone": "Europe/Paris",
+            "schemaVersion": 38,
+            "refresh": "10s",
+            "panels": [
+              {
+                "id": 1,
+                "title": "Pods ready",
+                "type": "stat",
+                "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+                "targets": [{
+                  "expr": "count(kube_pod_status_ready{namespace=\"boutique\",condition=\"true\"})",
+                  "legendFormat": "pods ready"
+                }]
+              },
+              {
+                "id": 2,
+                "title": "Nodes EKS actifs",
+                "type": "stat",
+                "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+                "targets": [{
+                  "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
+                  "legendFormat": "nodes"
+                }]
+              },
+              {
+                "id": 3,
+                "title": "Restarts de pods (5m)",
+                "type": "stat",
+                "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+                "targets": [{
+                  "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=\"boutique\"}[5m]))",
+                  "legendFormat": "restarts"
+                }],
+                "fieldConfig": {
+                  "defaults": {
+                    "thresholds": {
+                      "steps": [
+                        { "color": "green", "value": null },
+                        { "color": "yellow", "value": 1 },
+                        { "color": "red", "value": 5 }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "id": 4,
+                "title": "Replicas HPA par service",
+                "type": "timeseries",
+                "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+                "targets": [{
+                  "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"boutique\"}",
+                  "legendFormat": "{{ horizontalpodautoscaler }}"
+                }]
+              },
+              {
+                "id": 5,
+                "title": "CPU par pod (boutique)",
+                "type": "timeseries",
+                "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+                "targets": [{
+                  "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"boutique\",container!=\"\",container!=\"POD\"}[1m])) by (pod)",
+                  "legendFormat": "{{ pod }}"
+                }]
+              },
+              {
+                "id": 6,
+                "title": "Mémoire par pod (boutique)",
+                "type": "timeseries",
+                "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+                "targets": [{
+                  "expr": "sum(container_memory_working_set_bytes{namespace=\"boutique\",container!=\"\",container!=\"POD\"}) by (pod)",
+                  "legendFormat": "{{ pod }}"
+                }],
+                "fieldConfig": { "defaults": { "unit": "bytes" } }
+              },
+              {
+                "id": 7,
+                "title": "CPU nodes EKS (%)",
+                "type": "timeseries",
+                "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+                "targets": [{
+                  "expr": "100 - (avg by(node) (rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100)",
+                  "legendFormat": "{{ node }}"
+                }],
+                "fieldConfig": {
+                  "defaults": {
+                    "unit": "percent",
+                    "thresholds": {
+                      "steps": [
+                        { "color": "green", "value": null },
+                        { "color": "yellow", "value": 70 },
+                        { "color": "red", "value": 90 }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "id": 8,
+                "title": "Restarts par container",
+                "type": "timeseries",
+                "gridPos": { "h": 6, "w": 24, "x": 0, "y": 20 },
+                "targets": [{
+                  "expr": "increase(kube_pod_container_status_restarts_total{namespace=\"boutique\"}[5m])",
+                  "legendFormat": "{{ pod }} / {{ container }}"
+                }]
+              }
+            ]
+          }
+
+# ==================== PROMETHEUS ====================
+prometheus:
+  enabled: true
+
+  prometheusSpec:
+    retention: 7d
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+
+# ==================== ALERTMANAGER ====================
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+# ==================== NODE EXPORTER ====================
+nodeExporter:
+  enabled: true
+
+# ==================== KUBE STATE METRICS ====================
+kubeStateMetrics:
+  enabled: true
+
+# ==================== DÉSACTIVER CE QUI N'EST PAS DISPO SUR EKS MANAGÉ ====================
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
