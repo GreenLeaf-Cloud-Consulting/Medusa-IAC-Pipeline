@@ -15,7 +15,7 @@ resource "aws_key_pair" "db_key" {
     Name        = "${var.environment}-${var.region_name}-db-key-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
   }
@@ -79,7 +79,7 @@ resource "aws_security_group" "database" {
     Name        = "${var.environment}-${var.region_name}-db-sg-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
   }
@@ -100,7 +100,7 @@ resource "aws_ebs_volume" "primary_data" {
     Name        = "${var.environment}-${var.region_name}-db-primary-data-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     Type        = "database"
@@ -148,7 +148,7 @@ resource "aws_instance" "primary" {
     Name        = "${var.environment}-${var.region_name}-db-primary-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     Role        = "database-primary"
@@ -185,7 +185,7 @@ resource "aws_ebs_volume" "replica_data" {
     Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}-data-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     Type        = "database-replica"
@@ -233,7 +233,7 @@ resource "aws_instance" "replica" {
     Name        = "${var.environment}-${var.region_name}-db-replica-${count.index + 1}-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     Role        = "database-replica"
@@ -266,7 +266,7 @@ resource "aws_eip" "primary" {
     Name        = "${var.environment}-${var.region_name}-db-primary-eip-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
   }

@@ -18,14 +18,14 @@ variable "public_subnet_ids" {
   type        = list(string)
 }
 
-variable "medusa_backend_port" {
-  description = "Port for Medusa backend"
+variable "backend_port" {
+  description = "Port for backend application"
   type        = number
   default     = 9000
 }
 
-variable "medusa_storefront_port" {
-  description = "Port for Medusa storefront"
+variable "storefront_port" {
+  description = "Port for storefront application"
   type        = number
   default     = 8000
 }

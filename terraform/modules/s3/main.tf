@@ -1,4 +1,4 @@
-# S3 Bucket Module for Medusa Assets Storage
+# S3 Bucket Module for Online Boutique Assets Storage
 
 terraform {
   required_providers {
@@ -16,7 +16,7 @@ resource "aws_s3_bucket" "medusa_assets" {
     Name        = "${var.personal_prefix}-${var.environment}-medusa-assets-${var.region_short}"
     Environment = var.environment
     ManagedBy   = "Terraform"
-    Project     = "Medusa"
+    Project     = "OnlineBoutique"
   }
 }
 
@@ -80,7 +80,7 @@ resource "aws_s3_bucket_cors_configuration" "medusa_assets" {
 # IAM Policy for EC2 instances to access S3
 resource "aws_iam_policy" "s3_medusa_access" {
   name        = "${var.personal_prefix}-${var.environment}-medusa-s3-access-${var.region_short}"
-  description = "Allow Medusa app instances to access S3 bucket for assets"
+  description = "Allow app instances to access S3 bucket for assets"
 
   policy = jsonencode({
     Version = "2012-10-17"

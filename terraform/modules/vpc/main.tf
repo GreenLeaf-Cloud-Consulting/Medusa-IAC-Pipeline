@@ -11,7 +11,7 @@ resource "aws_vpc" "main" {
     Name        = "${var.environment}-${var.region_name}-vpc-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     ManagedBy   = "Terraform"

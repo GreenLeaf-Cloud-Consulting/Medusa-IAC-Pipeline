@@ -1,10 +1,10 @@
 output "backend_repository_url" {
-  description = "URL du dépôt ECR pour le backend Medusa"
+  description = "URL du dépôt ECR pour le backend"
   value       = aws_ecr_repository.backend.repository_url
 }
 
 output "storefront_repository_url" {
-  description = "URL du dépôt ECR pour le storefront Medusa"
+  description = "URL du dépôt ECR pour le storefront"
   value       = aws_ecr_repository.storefront.repository_url
 }
 

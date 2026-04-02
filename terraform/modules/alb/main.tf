@@ -1,5 +1,5 @@
 # Application Load Balancer Module
-# Crée un ALB pour distribuer le trafic entre les instances Medusa
+# Crée un ALB pour distribuer le trafic vers Online Boutique
 
 resource "aws_lb" "main" {
   name               = "${var.environment}-${var.region_name}-alb-rayane"
@@ -16,7 +16,7 @@ resource "aws_lb" "main" {
     Name        = "${var.environment}-${var.region_name}-alb-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     Region      = var.region_name
@@ -61,16 +61,16 @@ resource "aws_security_group" "alb" {
     Name        = "${var.environment}-${var.region_name}-alb-sg-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
   }
 }
 
-# Target Group pour Medusa backend
-resource "aws_lb_target_group" "medusa_backend" {
+# Target Group pour le backend
+resource "aws_lb_target_group" "backend" {
   name     = "${var.environment}-${var.region_name}-medusa-tg-rayane"
-  port     = var.medusa_backend_port
+  port     = var.backend_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
@@ -97,18 +97,18 @@ resource "aws_lb_target_group" "medusa_backend" {
     Name        = "${var.environment}-${var.region_name}-medusa-tg-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
   }
 }
 
 # Target Group pour Storefront (optionnel)
-resource "aws_lb_target_group" "medusa_storefront" {
+resource "aws_lb_target_group" "storefront" {
   count = var.enable_storefront ? 1 : 0
 
   name     = "${var.environment}-${var.region_name}-storefront-tg-rayane"
-  port     = var.medusa_storefront_port
+  port     = var.storefront_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
@@ -129,7 +129,7 @@ resource "aws_lb_target_group" "medusa_storefront" {
     Name        = "${var.environment}-${var.region_name}-storefront-tg-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
   }
@@ -155,7 +155,7 @@ resource "aws_lb_listener" "http" {
     }
 
     # Sinon, forward vers le target group
-    target_group_arn = var.enable_https_redirect ? null : aws_lb_target_group.medusa_backend.arn
+    target_group_arn = var.enable_https_redirect ? null : aws_lb_target_group.backend.arn
   }
 }
 
@@ -171,7 +171,7 @@ resource "aws_lb_listener" "https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.medusa_backend.arn
+    target_group_arn = aws_lb_target_group.backend.arn
   }
 }
 
@@ -184,7 +184,7 @@ resource "aws_lb_listener_rule" "storefront" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.medusa_storefront[0].arn
+    target_group_arn = aws_lb_target_group.storefront[0].arn
   }
 
   condition {

@@ -43,7 +43,7 @@ resource "aws_security_group" "instance_sg" {
     Name        = "${var.environment}-${var.instance_name}-app-sg-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
   }

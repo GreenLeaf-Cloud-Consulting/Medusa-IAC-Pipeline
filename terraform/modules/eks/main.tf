@@ -1,5 +1,5 @@
 # ==========================================
-# EKS MODULE - Cluster Kubernetes pour Medusa
+# EKS MODULE - Cluster Kubernetes pour Online Boutique
 # ==========================================
 
 # ==================== IAM - CONTROL PLANE ====================
@@ -22,7 +22,7 @@ resource "aws_iam_role" "cluster_role" {
     Name        = "${var.environment}-${var.region_name}-eks-cluster-role-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     ManagedBy   = "Terraform"
@@ -58,7 +58,7 @@ resource "aws_security_group" "cluster_sg" {
     Name        = "${var.environment}-${var.region_name}-eks-cluster-sg-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     ManagedBy   = "Terraform"
@@ -83,7 +83,7 @@ resource "aws_eks_cluster" "main" {
     Name        = "${var.environment}-${var.region_name}-eks-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     Region      = var.region_name
@@ -116,7 +116,7 @@ resource "aws_iam_role" "node_role" {
     Name        = "${var.environment}-${var.region_name}-eks-node-role-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     ManagedBy   = "Terraform"
@@ -270,7 +270,7 @@ resource "aws_eks_node_group" "main" {
     Name        = "${var.environment}-${var.region_name}-eks-ng-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     Region      = var.region_name

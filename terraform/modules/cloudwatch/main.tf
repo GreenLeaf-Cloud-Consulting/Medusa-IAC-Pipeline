@@ -1,5 +1,5 @@
 # ==========================================
-# CLOUDWATCH MODULE - Monitoring basique Medusa
+# CLOUDWATCH MODULE - Monitoring infrastructure Online Boutique
 # ==========================================
 
 # ==================== SNS TOPIC + EMAIL ====================
@@ -11,7 +11,7 @@ resource "aws_sns_topic" "alerts" {
     Name        = "${var.environment}-${var.region_name}-alerts-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     ManagedBy   = "Terraform"
@@ -51,7 +51,7 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_high" {
     Name        = "${var.environment}-${var.region_name}-${var.instance_names[count.index]}-cpu-high-rayane"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     Owner       = "equipe@greenleaf.com"
     CostCenter  = "ecommerce"
     ManagedBy   = "Terraform"
@@ -72,7 +72,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 24
         height = 1
         properties = {
-          markdown = "## Medusa Infrastructure - ${upper(var.region_name)} | CPU Utilization"
+          markdown = "## Online Boutique Infrastructure - ${upper(var.region_name)} | CPU Utilization"
         }
       },
       {

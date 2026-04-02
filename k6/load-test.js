@@ -2,65 +2,90 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
 
-// Métriques custom
 const errorRate = new Rate('errors');
 const responseTime = new Trend('response_time');
 
 // ==========================================
 // CONFIGURATION DU TEST
+// Semaine 2 : test progressif 5K → 20K → 50K
+// Think time réaliste : 5-15s entre actions
+// (simule de vraies personnes qui lisent les pages)
 // ==========================================
 export const options = {
   stages: [
-    { duration: '1m', target: 100 },   // Montée progressive : 0 → 100 users
-    { duration: '2m', target: 500 },   // Montée : 100 → 500 users
-    { duration: '3m', target: 1000 },  // Pic : 1000 users simultanés
-    { duration: '2m', target: 500 },   // Descente : 1000 → 500 users
-    { duration: '1m', target: 0 },     // Fin : 500 → 0 users
+    { duration: '2m',  target: 1000  },  // Warm-up
+    { duration: '3m',  target: 5000  },  // Palier 1 : 5K users
+    { duration: '5m',  target: 5000  },  // Maintien 5K
+    { duration: '3m',  target: 20000 },  // Palier 2 : 20K users
+    { duration: '5m',  target: 20000 },  // Maintien 20K
+    { duration: '3m',  target: 0     },  // Descente
   ],
   thresholds: {
-    http_req_duration: ['p(95)<2000'],  // 95% des requêtes < 2 secondes
-    http_req_failed:   ['rate<0.05'],   // Moins de 5% d'erreurs
-    errors:            ['rate<0.05'],
+    http_req_duration: ['p(95)<2000'],  // 95% < 2s
+    http_req_failed:   ['rate<0.01'],   // < 1% erreurs
+    errors:            ['rate<0.01'],
   },
 };
 
 // ==========================================
-// URLS CIBLES
+// URL CIBLE
 // ==========================================
-const BASE_URL_BACKEND    = 'http://a8f909db5484b46ad8c7056c3ae00d6b-1014007585.eu-west-3.elb.amazonaws.com';
-const BASE_URL_STOREFRONT = 'http://ac79d64780c8f428582ab270da8b13af-1880559677.eu-west-3.elb.amazonaws.com';
-const PUBLISHABLE_KEY     = 'pk_74022c0fa1718d207c7aa3b42fca8a177094ec76b7619be5f047ceb0b81566da';
+const BASE_URL = __ENV.FRONTEND_URL || 'http://FRONTEND_LB_URL';
 
-// On teste le backend par défaut
-const BASE_URL = BASE_URL_BACKEND;
+// Produits disponibles dans Online Boutique
+const PRODUCTS = [
+  'OLJCESPC7Z', '66VCHSJNUP', '1YMWWN1N4O',
+  'L9ECAV2T0O', '2ZYFJ3GM2N', '0PUK6V6EV0',
+  'LS4PSXUNUM', '9SIQT8TOJO', '6E92ZMYYFZ',
+];
 
 // ==========================================
-// SCÉNARIO DE TEST
+// SCÉNARIO BLACK FRIDAY RÉALISTE
+// Vrai parcours : Accueil → Browse → Produit → Panier
+// Think time : 5-15s (temps de lecture humain)
 // ==========================================
 export default function () {
-  // --- Test 1 : Health check ---
-  const healthRes = http.get(`${BASE_URL}/health`);
-  check(healthRes, {
-    'health check status 200': (r) => r.status === 200,
-    'health check rapide < 500ms': (r) => r.timings.duration < 500,
+  // --- Page d'accueil ---
+  const homeRes = http.get(`${BASE_URL}/`);
+  check(homeRes, {
+    'home: status 200': (r) => r.status === 200,
+    'home: < 2s':       (r) => r.timings.duration < 2000,
   });
-  errorRate.add(healthRes.status !== 200);
-  responseTime.add(healthRes.timings.duration);
+  errorRate.add(homeRes.status !== 200);
+  responseTime.add(homeRes.timings.duration);
 
-  sleep(0.5);
+  // Temps de lecture de la page d'accueil (5-15s)
+  sleep(5 + Math.random() * 10);
 
-  // --- Test 2 : Liste des produits (requête DB via PgBouncer) ---
-  const productsRes = http.get(`${BASE_URL}/store/products`, {
-    headers: { 'x-publishable-api-key': PUBLISHABLE_KEY },
+  // --- Page produit (browse aléatoire) ---
+  const product = PRODUCTS[Math.floor(Math.random() * PRODUCTS.length)];
+  const productRes = http.get(`${BASE_URL}/product/${product}`);
+  check(productRes, {
+    'product: status 200': (r) => r.status === 200,
+    'product: < 2s':       (r) => r.timings.duration < 2000,
   });
-  check(productsRes, {
-    'products status 200': (r) => r.status === 200,
-    'products répond < 2s': (r) => r.timings.duration < 2000,
-  });
-  errorRate.add(productsRes.status !== 200);
-  responseTime.add(productsRes.timings.duration);
+  errorRate.add(productRes.status !== 200);
+  responseTime.add(productRes.timings.duration);
 
-  sleep(1);
+  // Temps de lecture du produit (5-15s)
+  sleep(5 + Math.random() * 10);
+
+  // 70% des users ajoutent au panier (réaliste)
+  if (Math.random() < 0.7) {
+    const cartRes = http.post(`${BASE_URL}/cart`, {
+      'product_id': product,
+      'quantity':   '1',
+    }, { redirects: 5 });
+    check(cartRes, {
+      'cart: status 200': (r) => r.status === 200,
+      'cart: < 2s':       (r) => r.timings.duration < 2000,
+    });
+    errorRate.add(cartRes.status !== 200);
+    responseTime.add(cartRes.timings.duration);
+
+    // Réflexion avant de valider (8-20s)
+    sleep(8 + Math.random() * 12);
+  }
 }
 
 // ==========================================
@@ -68,16 +93,19 @@ export default function () {
 // ==========================================
 export function handleSummary(data) {
   return {
-    'stdout': textSummary(data, { indent: ' ', enableColors: true }),
+    'stdout': textSummary(data),
     'k6/results/summary.json': JSON.stringify(data, null, 2),
   };
 }
 
 function textSummary(data) {
   const metrics = data.metrics;
+  const passed = (metrics.http_req_failed?.values?.rate || 0) < 0.01
+    && (metrics.http_req_duration?.values['p(95)'] || 9999) < 2000;
+
   return `
 ==========================================
-  RÉSULTATS TEST DE CHARGE - MEDUSA
+  RÉSULTATS TEST DE CHARGE - BLACK FRIDAY
 ==========================================
   Durée totale     : ${Math.round(data.state.testRunDurationMs / 1000)}s
   Requêtes totales : ${metrics.http_reqs?.values?.count || 0}
@@ -90,6 +118,8 @@ function textSummary(data) {
     Maximum        : ${Math.round(metrics.http_req_duration?.values?.max || 0)}ms
 
   Débit            : ${(metrics.http_reqs?.values?.rate || 0).toFixed(2)} req/s
+
+  Résultat         : ${passed ? '✅ SUCCÈS - SLA respecté' : '❌ ÉCHEC - SLA non respecté'}
 ==========================================
 `;
 }

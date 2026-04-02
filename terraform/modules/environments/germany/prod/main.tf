@@ -70,8 +70,8 @@ module "alb" {
   vpc_id                  = module.vpc.vpc_id
   public_subnet_ids       = module.vpc.public_subnet_ids
 
-  medusa_backend_port     = 9000
-  medusa_storefront_port  = 8000
+  backend_port     = 9000
+  storefront_port  = 8000
 
   enable_deletion_protection = false
   enable_storefront          = false

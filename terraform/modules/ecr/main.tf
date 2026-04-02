@@ -11,7 +11,7 @@ resource "aws_ecr_repository" "backend" {
     Name        = "${var.personal_prefix}-${var.environment}-medusa-backend"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     ManagedBy   = "Terraform"
   }
 }
@@ -29,7 +29,7 @@ resource "aws_ecr_repository" "storefront" {
     Name        = "${var.personal_prefix}-${var.environment}-medusa-storefront"
     Project     = "greenleaf"
     Environment = var.environment
-    Application = "medusa"
+    Application = "boutique"
     ManagedBy   = "Terraform"
   }
 }

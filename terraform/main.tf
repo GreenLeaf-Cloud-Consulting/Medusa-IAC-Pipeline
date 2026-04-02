@@ -1,11 +1,10 @@
 # ==========================================
-# MAIN TERRAFORM CONFIGURATION - V2
-# Architecture complète multi-région avec ALB + EKS
+# MAIN TERRAFORM CONFIGURATION
+# Architecture EKS multi-région - Online Boutique
 # ==========================================
 #
 # MODE TEST (France uniquement)
 # Pour déployer les 3 régions, décommenter germany_prod, sweden_prod
-# et leurs outputs/variables associés
 # ==========================================
 
 terraform {
@@ -55,17 +54,10 @@ module "s3_global" {
   environment     = "prod"
   region_short    = "global"
 
-  enable_versioning = true
-  cors_allowed_origins = [
-    "http://${module.france_prod.alb_url}",
-    # "http://${module.germany_prod.alb_url}",   # décommenter avec germany_prod
-    # "http://${module.sweden_prod.alb_url}",    # décommenter avec sweden_prod
-    "http://localhost:9000",
-    "http://localhost:8000",
-    "http://localhost:7001"
-  ]
+  enable_versioning    = true
+  cors_allowed_origins = ["*"]
 
-  create_iam_role = true
+  create_iam_role = false
 }
 
 provider "aws" {
@@ -76,32 +68,6 @@ provider "aws" {
 # ==========================================
 # OUTPUTS
 # ==========================================
-
-# France
-output "france_alb_url" {
-  description = "URL de l'ALB France"
-  value       = module.france_prod.alb_url
-}
-
-output "france_app_instances" {
-  description = "Instances App France"
-  value       = module.france_prod.app_instances_info
-}
-
-output "france_database" {
-  description = "Instances Database France"
-  value       = module.france_prod.database_info
-}
-
-output "france_ecr_backend_url" {
-  description = "URL ECR backend France"
-  value       = module.france_prod.ecr_backend_url
-}
-
-output "france_ecr_storefront_url" {
-  description = "URL ECR storefront France"
-  value       = module.france_prod.ecr_storefront_url
-}
 
 output "france_eks_cluster_name" {
   description = "Nom du cluster EKS France"
@@ -118,52 +84,9 @@ output "france_eks_kubeconfig_command" {
   value       = module.france_prod.eks_kubeconfig_command
 }
 
-output "france_cloudwatch_dashboard_url" {
-  description = "URL du dashboard CloudWatch France"
-  value       = module.france_prod.cloudwatch_dashboard_url
-}
-
-output "france_cloudwatch_sns_topic_arn" {
-  description = "ARN du topic SNS pour les alertes France"
-  value       = module.france_prod.cloudwatch_sns_topic_arn
-}
-
-# Germany outputs (décommenter avec germany_prod)
-# output "germany_alb_url" {
-#   value = module.germany_prod.alb_url
-# }
-# output "germany_eks_cluster_name" {
-#   value = module.germany_prod.eks_cluster_name
-# }
-# output "germany_eks_kubeconfig_command" {
-#   value = module.germany_prod.eks_kubeconfig_command
-# }
-
-# Sweden outputs (décommenter avec sweden_prod)
-# output "sweden_alb_url" {
-#   value = module.sweden_prod.alb_url
-# }
-# output "sweden_eks_cluster_name" {
-#   value = module.sweden_prod.eks_cluster_name
-# }
-# output "sweden_eks_kubeconfig_command" {
-#   value = module.sweden_prod.eks_kubeconfig_command
-# }
-
-# S3 Global
 output "s3_bucket_name" {
-  description = "Nom du bucket S3 partagé pour les assets Medusa"
+  description = "Nom du bucket S3 partagé"
   value       = module.s3_global.bucket_name
-}
-
-output "s3_bucket_arn" {
-  description = "ARN du bucket S3"
-  value       = module.s3_global.bucket_arn
-}
-
-output "s3_iam_policy_arn" {
-  description = "ARN de la policy IAM pour accès S3"
-  value       = module.s3_global.iam_policy_arn
 }
 
 output "deployment_complete" {
@@ -172,24 +95,15 @@ output "deployment_complete" {
     DEPLOIEMENT TERRAFORM TERMINE !
     ==========================================
 
-    FRANCE (eu-west-2):
-       ALB:        ${module.france_prod.alb_url}
-       App 1:      ${module.france_prod.app_instance_1_public_ip}
-       App 2:      ${module.france_prod.app_instance_2_public_ip}
-       DB Primary: ${module.france_prod.database_primary_public_ip}
-       EKS:        ${module.france_prod.eks_cluster_name}
+    FRANCE (eu-west-3) :
+       EKS Cluster : ${module.france_prod.eks_cluster_name}
+       Endpoint    : ${module.france_prod.eks_cluster_endpoint}
 
-    S3 STORAGE:
-       Bucket: ${module.s3_global.bucket_name}
-       Region: eu-west-1 (Ireland)
+    PROCHAINES ETAPES :
+       bash deploy.sh
 
-    PROCHAINES ETAPES (EKS) :
-       aws eks update-kubeconfig --region eu-west-3 --name ${module.france_prod.eks_cluster_name}
-       kubectl apply -f ../k8s/
-
-    ACCES :
-       Backend:    via kubectl get svc -n medusa (port 9000)
-       Storefront: via kubectl get svc -n medusa (port 8000)
+    ACCES Online Boutique :
+       kubectl get svc frontend-external -n boutique
     ==========================================
   EOT
 }

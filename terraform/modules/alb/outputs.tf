@@ -30,12 +30,12 @@ output "security_group_id" {
 
 output "target_group_backend_arn" {
   description = "ARN of the backend target group"
-  value       = aws_lb_target_group.medusa_backend.arn
+  value       = aws_lb_target_group.backend.arn
 }
 
 output "target_group_storefront_arn" {
   description = "ARN of the storefront target group"
-  value       = var.enable_storefront ? aws_lb_target_group.medusa_storefront[0].arn : null
+  value       = var.enable_storefront ? aws_lb_target_group.storefront[0].arn : null
 }
 
 output "http_listener_arn" {
