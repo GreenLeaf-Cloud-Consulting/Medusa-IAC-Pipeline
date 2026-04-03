@@ -7,7 +7,7 @@ const responseTime = new Trend('response_time');
 
 // ==========================================
 // CONFIGURATION DU TEST
-// Semaine 2 : test progressif 5K → 20K → 50K
+// Semaine 3 : test progressif 5K → 20K → 50K → 70K
 // Think time réaliste : 5-15s entre actions
 // (simule de vraies personnes qui lisent les pages)
 // ==========================================
@@ -15,9 +15,13 @@ export const options = {
   stages: [
     { duration: '2m',  target: 1000  },  // Warm-up
     { duration: '3m',  target: 5000  },  // Palier 1 : 5K users
-    { duration: '5m',  target: 5000  },  // Maintien 5K
+    { duration: '3m',  target: 5000  },  // Maintien 5K
     { duration: '3m',  target: 20000 },  // Palier 2 : 20K users
-    { duration: '5m',  target: 20000 },  // Maintien 20K
+    { duration: '3m',  target: 20000 },  // Maintien 20K
+    { duration: '3m',  target: 50000 },  // Palier 3 : 50K users
+    { duration: '3m',  target: 50000 },  // Maintien 50K
+    { duration: '3m',  target: 70000 },  // Palier 4 : 70K users
+    { duration: '5m',  target: 70000 },  // Maintien 70K
     { duration: '3m',  target: 0     },  // Descente
   ],
   thresholds: {

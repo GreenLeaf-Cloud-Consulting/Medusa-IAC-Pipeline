@@ -16,7 +16,7 @@ spec:
     kind: Deployment
     name: frontend
   minReplicas: 2
-  maxReplicas: 20
+  maxReplicas: 40
   metrics:
   - type: Resource
     resource:
@@ -53,7 +53,7 @@ spec:
     kind: Deployment
     name: cartservice
   minReplicas: 2
-  maxReplicas: 15
+  maxReplicas: 30
   metrics:
   - type: Resource
     resource:
@@ -84,7 +84,7 @@ spec:
     kind: Deployment
     name: productcatalogservice
   minReplicas: 2
-  maxReplicas: 15
+  maxReplicas: 30
   metrics:
   - type: Resource
     resource:
@@ -115,7 +115,7 @@ spec:
     kind: Deployment
     name: checkoutservice
   minReplicas: 2
-  maxReplicas: 12
+  maxReplicas: 25
   metrics:
   - type: Resource
     resource:
@@ -146,7 +146,7 @@ spec:
     kind: Deployment
     name: recommendationservice
   minReplicas: 2
-  maxReplicas: 12
+  maxReplicas: 25
   metrics:
   - type: Resource
     resource:
@@ -177,7 +177,7 @@ spec:
     kind: Deployment
     name: currencyservice
   minReplicas: 2
-  maxReplicas: 12
+  maxReplicas: 25
   metrics:
   - type: Resource
     resource:

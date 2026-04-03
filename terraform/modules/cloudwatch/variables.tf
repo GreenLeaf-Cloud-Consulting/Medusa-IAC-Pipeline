@@ -9,7 +9,7 @@ variable "region_name" {
 }
 
 variable "aws_region" {
-  description = "AWS region code (e.g. eu-west-2)"
+  description = "AWS region code (e.g. eu-west-3)"
   type        = string
 }
 
@@ -18,18 +18,19 @@ variable "alert_email" {
   type        = string
 }
 
-variable "instance_ids" {
-  description = "List of EC2 instance IDs to monitor (must have at least 3: app1, app2, db)"
-  type        = list(string)
-}
-
-variable "instance_names" {
-  description = "List of human-readable names for monitored instances (same order as instance_ids)"
-  type        = list(string)
+variable "eks_cluster_name" {
+  description = "Nom du cluster EKS à surveiller"
+  type        = string
 }
 
 variable "cpu_threshold" {
   description = "CPU utilization percentage threshold to trigger alarm"
   type        = number
-  default     = 70
+  default     = 80
+}
+
+variable "memory_threshold" {
+  description = "Memory utilization percentage threshold to trigger alarm"
+  type        = number
+  default     = 80
 }

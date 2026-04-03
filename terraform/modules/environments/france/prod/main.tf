@@ -52,8 +52,8 @@ module "eks" {
   subnet_ids         = module.vpc.public_subnet_ids
   node_instance_type = "t3.large"
   node_min_size      = 1
-  node_desired_size  = 2
-  node_max_size      = 6
+  node_desired_size  = 3
+  node_max_size      = 10
 
   # Spot Instances : node group séparé pour les pics (~70% moins cher)
   enable_spot_nodes  = true
@@ -67,6 +67,19 @@ module "budget" {
   team_name          = "rayane"
   monthly_budget_usd = 600
   alert_email        = "jugurta1999@gmail.com"
+}
+
+# ==================== CLOUDWATCH CONTAINER INSIGHTS ====================
+module "cloudwatch" {
+  source = "../../../cloudwatch"
+
+  environment      = local.environment
+  region_name      = local.region_name
+  aws_region       = "eu-west-3"
+  alert_email      = "jugurta1999@gmail.com"
+  eks_cluster_name = module.eks.cluster_name
+  cpu_threshold    = 80
+  memory_threshold = 80
 }
 
 # ==================== WAF ====================

@@ -143,6 +143,25 @@ resource "aws_iam_role_policy_attachment" "node_ssm_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+resource "aws_iam_role_policy_attachment" "node_cloudwatch_policy" {
+  role       = aws_iam_role.node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+# ==================== CLOUDWATCH CONTAINER INSIGHTS ====================
+resource "aws_eks_addon" "cloudwatch_observability" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "amazon-cloudwatch-observability"
+
+  tags = {
+    Name        = "${var.environment}-${var.region_name}-cloudwatch-addon"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+
+  depends_on = [aws_eks_node_group.main]
+}
+
 # ==================== IAM - CLUSTER AUTOSCALER ====================
 
 resource "aws_iam_role_policy" "cluster_autoscaler" {

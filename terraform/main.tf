@@ -7,24 +7,6 @@
 # Pour déployer les 3 régions, décommenter germany_prod, sweden_prod
 # ==========================================
 
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
-    tls = {
-      source  = "hashicorp/tls"
-      version = "~> 4.0"
-    }
-  }
-}
-
 # ==================== FRANCE PRODUCTION ====================
 module "france_prod" {
   source = "./modules/environments/france/prod"
@@ -60,10 +42,6 @@ module "s3_global" {
   create_iam_role = false
 }
 
-provider "aws" {
-  alias  = "ireland"
-  region = "eu-west-1"
-}
 
 # ==========================================
 # OUTPUTS

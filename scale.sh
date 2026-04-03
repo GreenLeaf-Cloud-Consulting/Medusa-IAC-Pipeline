@@ -29,9 +29,8 @@ scale() {
 
 case "$1" in
   up)
-    echo "🚀 Pré-scale Black Friday → 6 nodes (max 10)"
-    scale 6 6
-    # Note: maxSize fixé à 10 dans la fonction scale pour permettre l'autoscaling au-delà
+    echo "🚀 Pré-scale Black Friday → 8 nodes (max 10)"
+    scale 8 8
     echo ""
     echo "Surveiller avec : watch kubectl get nodes"
     ;;
